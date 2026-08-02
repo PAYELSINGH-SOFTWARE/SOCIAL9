@@ -1,15 +1,15 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screen/dashboard_screen.dart';
 import 'screen/login_screen.dart';
 
 void main() {
-  runApp(const Social9App());
+  runApp(const VCueSocial9App());
 }
 
-class Social9App extends StatelessWidget {
-  const Social9App({super.key});
+class VCueSocial9App extends StatelessWidget {
+  const VCueSocial9App({super.key});
 
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
@@ -22,19 +22,14 @@ class Social9App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Social9',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      title: 'vCueSocial9',
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: FutureBuilder<bool>(
         future: isLoggedIn(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
+              body: Center(child: CircularProgressIndicator()),
             );
           }
 

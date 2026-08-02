@@ -1,4 +1,4 @@
-# Miscellaneous
+﻿# Miscellaneous
 *.class
 *.log
 *.pyc
@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local secrets
+.env
+backened/uploads/*
+!backened/uploads/.gitkeep

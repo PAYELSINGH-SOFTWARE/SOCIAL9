@@ -22,9 +22,9 @@ class _SignupScreenState extends State<SignupScreen> {
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
@@ -39,7 +39,7 @@ class _SignupScreenState extends State<SignupScreen> {
         passwordController.text.trim(),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -50,21 +50,26 @@ class _SignupScreenState extends State<SignupScreen> {
         String message = "Signup failed";
         try {
           final error = jsonDecode(response.body);
-          message = error["detail"] ?? message;
+          final detail = error["detail"];
+          if (detail is String) {
+            message = detail;
+          } else if (detail is List && detail.isNotEmpty) {
+            message = detail.first["msg"]?.toString() ?? message;
+          }
         } catch (_) {
           if (response.body.isNotEmpty) {
             message = response.body;
           }
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) {
         setState(() {
