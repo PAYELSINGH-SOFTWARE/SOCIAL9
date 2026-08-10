@@ -292,3 +292,4 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 }
+

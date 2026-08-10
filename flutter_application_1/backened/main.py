@@ -18,10 +18,15 @@ from .router.auth import router as auth_router
 from .router.posts import router as posts_router
 
 
+# ============================================================
+# DATABASE
+# ============================================================
+
 Base.metadata.create_all(bind=engine)
 
 
 # Lightweight migrations for existing local SQLite databases.
+
 existing_columns = {
     column["name"]
     for column in inspect(engine).get_columns("posts")
@@ -39,6 +44,10 @@ with engine.begin() as connection:
         if name not in existing_columns:
             connection.execute(text(statement))
 
+
+# ============================================================
+# SCHEDULED POST PUBLISHING
+# ============================================================
 
 def publish_due_posts():
     db = SessionLocal()
@@ -70,6 +79,10 @@ async def scheduler_loop():
         await asyncio.sleep(30)
 
 
+# ============================================================
+# APPLICATION LIFESPAN
+# ============================================================
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = asyncio.create_task(scheduler_loop())
@@ -86,12 +99,20 @@ async def lifespan(app: FastAPI):
             pass
 
 
+# ============================================================
+# FASTAPI APPLICATION
+# ============================================================
+
 app = FastAPI(
     title="vCueSocial9 API",
     version="0.2.0",
     lifespan=lifespan,
 )
 
+
+# ============================================================
+# UPLOADS
+# ============================================================
 
 uploads_directory = Path(__file__).resolve().parent / "uploads"
 uploads_directory.mkdir(exist_ok=True)
@@ -103,6 +124,10 @@ app.mount(
 )
 
 
+# ============================================================
+# CORS
+# ============================================================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[],
@@ -112,6 +137,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ============================================================
+# ROOT ROUTE
+# ============================================================
+
+@app.get("/", tags=["System"])
+def root():
+    return {
+        "message": "Social9 API is running",
+        "status": "ok",
+        "version": "0.2.0",
+    }
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
 
 @app.get("/health", tags=["System"])
 def health():
@@ -183,7 +225,6 @@ def privacy_policy():
             personal information.
         </p>
 
-
         <h2>2. Information We Collect</h2>
 
         <p>
@@ -191,7 +232,6 @@ def privacy_policy():
             address, account credentials, and information required to
             connect supported social media accounts.
         </p>
-
 
         <h2>3. How We Use Your Information</h2>
 
@@ -202,7 +242,6 @@ def privacy_policy():
             accounts.
         </p>
 
-
         <h2>4. Social Media Accounts</h2>
 
         <p>
@@ -212,14 +251,12 @@ def privacy_policy():
             and according to the permissions you grant.
         </p>
 
-
         <h2>5. Data Storage</h2>
 
         <p>
             Account information and application data may be stored in
             our database for the purpose of providing Social9 services.
         </p>
-
 
         <h2>6. Data Sharing</h2>
 
@@ -230,7 +267,6 @@ def privacy_policy():
             you have requested and authorized.
         </p>
 
-
         <h2>7. Security</h2>
 
         <p>
@@ -238,7 +274,6 @@ def privacy_policy():
             against unauthorized access, alteration, disclosure, or
             destruction.
         </p>
-
 
         <h2>8. Account Deletion</h2>
 
@@ -248,14 +283,12 @@ def privacy_policy():
             team.
         </p>
 
-
         <h2>9. Changes to This Privacy Policy</h2>
 
         <p>
             We may update this Privacy Policy from time to time.
             Changes will be published on this page.
         </p>
-
 
         <h2>10. Contact Us</h2>
 

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AnalyticsService {
-  static const baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = "https://social9-1.onrender.com";
 
   static Future<Map<String, String>> _headers() async {
     final token = (await SharedPreferences.getInstance()).getString('token');
@@ -42,3 +42,4 @@ class AnalyticsService {
   static Future<Map<String, dynamic>> performance() =>
       _get('/analytics/performance');
 }
+

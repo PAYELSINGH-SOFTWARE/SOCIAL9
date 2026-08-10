@@ -159,3 +159,4 @@ class _PostsScreenState extends State<PostsScreen> {
     );
   }
 }
+

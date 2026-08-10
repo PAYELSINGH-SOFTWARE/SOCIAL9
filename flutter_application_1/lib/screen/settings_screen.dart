@@ -43,10 +43,11 @@ class _SettingsScreenState extends State<SettingsScreen>
       final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
       if (!opened) throw Exception('Could not open the authorization page');
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
     }
   }
 
@@ -62,10 +63,12 @@ class _SettingsScreenState extends State<SettingsScreen>
       body: FutureBuilder<List<dynamic>>(
         future: accounts,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          if (snapshot.hasError)
+          }
+          if (snapshot.hasError) {
             return Center(child: Text(snapshot.error.toString()));
+          }
           return RefreshIndicator(
             onRefresh: () async => refresh(),
             child: ListView(
@@ -108,3 +111,4 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 }
+

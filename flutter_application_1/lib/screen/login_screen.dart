@@ -114,10 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       throw Exception('Social login timed out');
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
     } finally {
       if (mounted) setState(() => isSocialLoading = false);
     }
@@ -235,3 +236,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

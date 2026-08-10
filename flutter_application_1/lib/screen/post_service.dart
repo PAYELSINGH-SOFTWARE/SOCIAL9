@@ -3,8 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PostService {
-  static const String baseUrl = 'http://127.0.0.1:8000';
-
+static const String baseUrl = "https://social9-1.onrender.com";
   static Future<Map<String, String>> _headers() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -55,3 +54,4 @@ class PostService {
     );
   }
 }
+
