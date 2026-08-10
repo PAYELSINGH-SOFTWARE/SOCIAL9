@@ -108,7 +108,12 @@ app = FastAPI(
     version="0.2.0",
     lifespan=lifespan,
 )
-
+@app.get("/", tags=["System"])
+def root():
+    return {
+        "status": "ok",
+        "message": "Social9 API is running"
+    }
 
 # ============================================================
 # UPLOADS
