@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,11 +22,18 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
   bool isSocialLoading = false;
 
+  // ============================================================
+  // NORMAL EMAIL/PASSWORD LOGIN
+  // ============================================================
+
   Future<void> login() async {
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please fill all fields"),
+        ),
+      );
       return;
     }
 
@@ -46,19 +51,26 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = jsonDecode(response.body);
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString("token", data["access_token"]);
+
+        await prefs.setString(
+          "token",
+          data["access_token"],
+        );
 
         if (!mounted) return;
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          MaterialPageRoute(
+            builder: (_) => const DashboardScreen(),
+          ),
         );
       } else {
         String message = "Login failed";
 
         try {
           final error = jsonDecode(response.body);
+
           message = error["detail"] ?? message;
         } catch (_) {
           if (response.body.isNotEmpty) {
@@ -66,14 +78,22 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+          ),
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -83,44 +103,118 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // ============================================================
+  // SOCIAL LOGIN
+  // ============================================================
+
   Future<void> socialLogin(String provider) async {
-    setState(() => isSocialLoading = true);
+    setState(() {
+      isSocialLoading = true;
+    });
+
     try {
-      final attempt = await AccountService.startSocialLogin(provider);
+      // Ask FastAPI to create a social-login attempt.
+      final attempt =
+          await AccountService.startSocialLogin(provider);
+
+      final authorizationUrl =
+          attempt['authorization_url'] as String;
+
+      final attemptId =
+          attempt['attempt_id'] as String;
+
+      // Open LinkedIn in browser.
       final opened = await launchUrl(
-        Uri.parse(attempt['authorization_url'] as String),
+        Uri.parse(authorizationUrl),
         mode: LaunchMode.externalApplication,
       );
-      if (!opened) throw Exception('Could not open provider login');
 
-      for (var count = 0; count < 120; count++) {
-        await Future<void>.delayed(const Duration(seconds: 2));
-        final status = await AccountService.socialLoginStatus(
-          attempt['attempt_id'] as String,
+      if (!opened) {
+        throw Exception(
+          'Could not open $provider login',
         );
-        if (status['status'] == 'completed') {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', status['access_token'] as String);
+      }
+
+      // Poll FastAPI until LinkedIn login is completed.
+      for (var count = 0; count < 120; count++) {
+        await Future<void>.delayed(
+          const Duration(seconds: 2),
+        );
+
+        final status =
+            await AccountService.socialLoginStatus(
+          attemptId,
+        );
+
+        final loginStatus = status['status'];
+
+        // Login completed
+        if (loginStatus == 'completed') {
+          final accessToken =
+              status['access_token'] as String?;
+
+          if (accessToken == null ||
+              accessToken.isEmpty) {
+            throw Exception(
+              'Social login completed but no access token was returned',
+            );
+          }
+
+          final prefs =
+              await SharedPreferences.getInstance();
+
+          await prefs.setString(
+            'token',
+            accessToken,
+          );
+
           if (!mounted) return;
+
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const DashboardScreen()),
+            MaterialPageRoute(
+              builder: (_) => const DashboardScreen(),
+            ),
           );
+
           return;
         }
-        if (status['status'] == 'expired' || status['status'] == 'failed') {
-          throw Exception(status['error'] ?? 'Social login expired');
+
+        // Login failed
+        if (loginStatus == 'failed') {
+          throw Exception(
+            status['error'] ??
+                '$provider login failed',
+          );
+        }
+
+        // Login attempt expired
+        if (loginStatus == 'expired') {
+          throw Exception(
+            '$provider login session expired',
+          );
         }
       }
-      throw Exception('Social login timed out');
+
+      throw Exception(
+        '$provider login timed out',
+      );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error.toString(),
+            ),
+          ),
+        );
       }
     } finally {
-      if (mounted) setState(() => isSocialLoading = false);
+      if (mounted) {
+        setState(() {
+          isSocialLoading = false;
+        });
+      }
     }
   }
 
@@ -128,8 +222,13 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+
     super.dispose();
   }
+
+  // ============================================================
+  // UI
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -140,27 +239,35 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               const SizedBox(height: 80),
+
               Image.asset(
                 'assets/images/vcue9_wordmark_v3.png',
                 width: 360,
                 height: 180,
                 fit: BoxFit.contain,
               ),
+
               const SizedBox(height: 10),
+
               const Text(
                 "Manage your social media effortlessly",
                 textAlign: TextAlign.center,
               ),
+
               const SizedBox(height: 40),
+
               TextField(
                 controller: emailController,
-                keyboardType: TextInputType.emailAddress,
+                keyboardType:
+                    TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: "Email",
                   border: OutlineInputBorder(),
                 ),
               ),
+
               const SizedBox(height: 20),
+
               TextField(
                 controller: passwordController,
                 obscureText: true,
@@ -169,63 +276,113 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                 ),
               ),
+
               const SizedBox(height: 30),
+
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : login,
+                  onPressed:
+                      isLoading || isSocialLoading
+                          ? null
+                          : login,
                   child: isLoading
                       ? const CircularProgressIndicator()
                       : const Text("Login"),
                 ),
               ),
+
               const SizedBox(height: 24),
+
               const Row(
                 children: [
-                  Expanded(child: Divider()),
+                  Expanded(
+                    child: Divider(),
+                  ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    padding:
+                        EdgeInsets.symmetric(
+                      horizontal: 12,
+                    ),
                     child: Text('OR'),
                   ),
-                  Expanded(child: Divider()),
+                  Expanded(
+                    child: Divider(),
+                  ),
                 ],
               ),
+
               const SizedBox(height: 16),
+
+              // =================================================
+              // INSTAGRAM
+              // =================================================
+
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: isSocialLoading
-                      ? null
-                      : () => socialLogin('instagram'),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Continue with Instagram'),
+                  onPressed:
+                      isSocialLoading
+                          ? null
+                          : () => socialLogin(
+                                'instagram',
+                              ),
+                  icon: const Icon(
+                    Icons.camera_alt,
+                  ),
+                  label: const Text(
+                    'Continue with Instagram',
+                  ),
                 ),
               ),
+
               const SizedBox(height: 12),
+
+              // =================================================
+              // LINKEDIN
+              // =================================================
+
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: isSocialLoading
-                      ? null
-                      : () => socialLogin('linkedin'),
-                  icon: const Icon(Icons.work),
-                  label: const Text('Continue with LinkedIn'),
+                  onPressed:
+                      isSocialLoading
+                          ? null
+                          : () => socialLogin(
+                                'linkedin',
+                              ),
+                  icon: const Icon(
+                    Icons.work,
+                  ),
+                  label: const Text(
+                    'Continue with LinkedIn',
+                  ),
                 ),
               ),
+
               const SizedBox(height: 20),
+
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account?"),
+                  const Text(
+                    "Don't have an account?",
+                  ),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const SignupScreen()),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const SignupScreen(),
+                        ),
                       );
                     },
-                    child: const Text("Sign Up"),
+                    child: const Text(
+                      "Sign Up",
+                    ),
                   ),
                 ],
               ),
@@ -236,4 +393,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

@@ -1,4 +1,4 @@
-﻿name: flutter_application_1
+name: flutter_application_1
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -16,6 +16,8 @@ dependencies:
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   file_picker: ^10.3.10
+  app_links: ^7.2.1
+  flutter_secure_storage: ^10.3.1
 
 dev_dependencies:
   flutter_test:
