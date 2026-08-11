@@ -25,19 +25,34 @@ from .router.posts import router as posts_router
 Base.metadata.create_all(bind=engine)
 
 
-# Lightweight migrations for existing local SQLite databases.
+# Lightweight database migrations
+# ============================================================
 
 existing_columns = {
     column["name"]
     for column in inspect(engine).get_columns("posts")
 }
 
+
 column_migrations = {
-    "media_urls": "ALTER TABLE posts ADD COLUMN media_urls TEXT NOT NULL DEFAULT '[]'",
-    "external_post_ids": "ALTER TABLE posts ADD COLUMN external_post_ids TEXT NOT NULL DEFAULT '{}'",
-    "publish_error": "ALTER TABLE posts ADD COLUMN publish_error TEXT",
-    "published_at": "ALTER TABLE posts ADD COLUMN published_at DATETIME",
+    "media_urls": (
+        "ALTER TABLE posts "
+        "ADD COLUMN media_urls TEXT NOT NULL DEFAULT '[]'"
+    ),
+    "external_post_ids": (
+        "ALTER TABLE posts "
+        "ADD COLUMN external_post_ids TEXT NOT NULL DEFAULT '{}'"
+    ),
+    "publish_error": (
+        "ALTER TABLE posts "
+        "ADD COLUMN publish_error TEXT"
+    ),
+    "published_at": (
+        "ALTER TABLE posts "
+        "ADD COLUMN published_at TIMESTAMP WITH TIME ZONE"
+    ),
 }
+
 
 with engine.begin() as connection:
     for name, statement in column_migrations.items():
@@ -108,12 +123,20 @@ app = FastAPI(
     version="0.2.0",
     lifespan=lifespan,
 )
+
+
+# ============================================================
+# ROOT ROUTE
+# ============================================================
+
 @app.get("/", tags=["System"])
 def root():
     return {
+        "message": "Social9 API is running",
         "status": "ok",
-        "message": "Social9 API is running"
+        "version": "0.2.0",
     }
+
 
 # ============================================================
 # UPLOADS
@@ -141,19 +164,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ============================================================
-# ROOT ROUTE
-# ============================================================
-
-@app.get("/", tags=["System"])
-def root():
-    return {
-        "message": "Social9 API is running",
-        "status": "ok",
-        "version": "0.2.0",
-    }
 
 
 # ============================================================
@@ -308,7 +318,7 @@ def privacy_policy():
 
 
 # ============================================================
-# EXISTING SOCIAL9 ROUTERS
+# SOCIAL9 ROUTERS
 # ============================================================
 
 app.include_router(
