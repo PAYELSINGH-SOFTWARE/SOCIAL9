@@ -1,4 +1,5 @@
-﻿import hashlib
+﻿
+import hashlib
 import hmac
 import os
 import secrets
@@ -6,17 +7,28 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import httpx
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError
-from jose import jwt
+from fastapi.security import HTTPBearer
+from jose import JWTError, jwt
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
 from ..models import User
 
+
+# ============================================================
+# LOAD ENVIRONMENT VARIABLES
+# ============================================================
+
+load_dotenv()
+
+
+# ============================================================
+# ROUTER
+# ============================================================
 
 router = APIRouter()
 bearer_scheme = HTTPBearer()
@@ -34,7 +46,7 @@ SECRET_KEY = os.getenv(
 ALGORITHM = "HS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(
-    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080")
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 )
 
 
@@ -43,11 +55,24 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
 # ============================================================
 
 LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
-LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
+
+LINKEDIN_CLIENT_SECRET = os.getenv(
+    "LINKEDIN_CLIENT_SECRET"
+)
 
 LINKEDIN_REDIRECT_URI = os.getenv(
     "LINKEDIN_REDIRECT_URI",
-    "https://social9-1.onrender.com/auth/linkedin/callback",
+    "http://localhost:8000/auth/linkedin/callback",
+)
+
+FLUTTER_LINKEDIN_CALLBACK = os.getenv(
+    "FLUTTER_LINKEDIN_CALLBACK",
+    "social9://linkedin-callback",
+)
+
+LINKEDIN_SCOPES = os.getenv(
+    "LINKEDIN_SCOPES",
+    "openid profile email",
 )
 
 LINKEDIN_AUTHORIZATION_URL = (
@@ -62,19 +87,12 @@ LINKEDIN_USERINFO_URL = (
     "https://api.linkedin.com/v2/userinfo"
 )
 
-# OIDC login + permission to create/share LinkedIn posts.
-LINKEDIN_SCOPES = "openid profile email w_member_social"
-
-# Flutter deep link.
-# We will configure Flutter/Android for this later.
-FLUTTER_LINKEDIN_CALLBACK = "social9://linkedin/callback"
-
 
 # ============================================================
-# PASSWORD FUNCTIONS
+# PASSWORD HASHING
 # ============================================================
 
-def hash_password(password: str):
+def hash_password(password: str) -> str:
     salt = os.urandom(16)
 
     password_hash = hashlib.pbkdf2_hmac(
@@ -90,12 +108,17 @@ def hash_password(password: str):
 def verify_password(
     plain_password: str,
     hashed_password: str,
-):
+) -> bool:
+
     try:
-        salt_hex, stored_hash_hex = hashed_password.split(":", 1)
+        salt_hex, stored_hash_hex = (
+            hashed_password.split(":", 1)
+        )
 
         salt = bytes.fromhex(salt_hex)
-        stored_hash = bytes.fromhex(stored_hash_hex)
+        stored_hash = bytes.fromhex(
+            stored_hash_hex
+        )
 
     except ValueError:
         return False
@@ -117,15 +140,22 @@ def verify_password(
 # JWT
 # ============================================================
 
-def create_access_token(data: dict):
+def create_access_token(data: dict) -> str:
+
     to_encode = data.copy()
 
     expire = (
         datetime.now(timezone.utc)
-        + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     )
 
-    to_encode.update({"exp": expire})
+    to_encode.update(
+        {
+            "exp": expire
+        }
+    )
 
     return jwt.encode(
         to_encode,
@@ -135,10 +165,11 @@ def create_access_token(data: dict):
 
 
 # ============================================================
-# DATABASE
+# DATABASE DEPENDENCY
 # ============================================================
 
 def get_db():
+
     db = SessionLocal()
 
     try:
@@ -149,68 +180,11 @@ def get_db():
 
 
 # ============================================================
-# CURRENT USER
-# ============================================================
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(
-        bearer_scheme
-    ),
-    db: Session = Depends(get_db),
-):
-    try:
-        payload = jwt.decode(
-            credentials.credentials,
-            SECRET_KEY,
-            algorithms=[ALGORITHM],
-        )
-
-        email = payload.get("sub")
-
-        if not email:
-            raise JWTError("Missing subject")
-
-    except JWTError as exc:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token",
-        ) from exc
-
-    user = (
-        db.query(User)
-        .filter(User.email == email)
-        .first()
-    )
-
-    if user is None:
-        raise HTTPException(
-            status_code=401,
-            detail="User no longer exists",
-        )
-
-    return user
-
-
-# ============================================================
-# ME
-# ============================================================
-
-@router.get("/me")
-def me(
-    user: User = Depends(get_current_user),
-):
-    return {
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-    }
-
-
-# ============================================================
-# SIGNUP
+# SIGNUP REQUEST
 # ============================================================
 
 class SignupRequest(BaseModel):
+
     name: str
     email: str
     password: str
@@ -218,11 +192,12 @@ class SignupRequest(BaseModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: str):
+
         value = value.strip()
 
-        if len(value) < 2:
+        if not value:
             raise ValueError(
-                "Name must be at least 2 characters"
+                "Name cannot be empty"
             )
 
         return value
@@ -230,6 +205,7 @@ class SignupRequest(BaseModel):
     @field_validator("email")
     @classmethod
     def normalize_email(cls, value: str):
+
         value = value.strip().lower()
 
         if (
@@ -246,6 +222,7 @@ class SignupRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, value: str):
+
         if len(value) < 8:
             raise ValueError(
                 "Password must be at least 8 characters"
@@ -255,16 +232,18 @@ class SignupRequest(BaseModel):
 
 
 # ============================================================
-# LOGIN
+# LOGIN REQUEST
 # ============================================================
 
 class LoginRequest(BaseModel):
+
     email: str
     password: str
 
     @field_validator("email")
     @classmethod
     def normalize_email(cls, value: str):
+
         return value.strip().lower()
 
 
@@ -272,11 +251,15 @@ class LoginRequest(BaseModel):
 # NORMAL SIGNUP
 # ============================================================
 
-@router.post("/signup", status_code=201)
+@router.post(
+    "/signup",
+    status_code=201,
+)
 async def signup(
     data: SignupRequest,
     db: Session = Depends(get_db),
 ):
+
     existing_user = (
         db.query(User)
         .filter(User.email == data.email)
@@ -292,7 +275,9 @@ async def signup(
     new_user = User(
         name=data.name,
         email=data.email,
-        hashed_password=hash_password(data.password),
+        hashed_password=hash_password(
+            data.password
+        ),
     )
 
     db.add(new_user)
@@ -318,6 +303,7 @@ async def login(
     data: LoginRequest,
     db: Session = Depends(get_db),
 ):
+
     user = (
         db.query(User)
         .filter(User.email == data.email)
@@ -337,7 +323,9 @@ async def login(
         )
 
     access_token = create_access_token(
-        data={"sub": user.email}
+        data={
+            "sub": user.email
+        }
     )
 
     return {
@@ -357,6 +345,7 @@ async def login(
 
 @router.get("/linkedin/login")
 async def linkedin_login():
+
     if not LINKEDIN_CLIENT_ID:
         raise HTTPException(
             status_code=500,
@@ -369,11 +358,12 @@ async def linkedin_login():
             detail="LINKEDIN_CLIENT_SECRET is not configured",
         )
 
-    # Create a signed state value.
     state_payload = {
         "nonce": secrets.token_urlsafe(24),
-        "exp": datetime.now(timezone.utc)
-        + timedelta(minutes=10),
+        "exp": (
+            datetime.now(timezone.utc)
+            + timedelta(minutes=10)
+        ),
     }
 
     state = jwt.encode(
@@ -414,16 +404,24 @@ async def linkedin_callback(
     error_description: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
+
     # --------------------------------------------------------
-    # LinkedIn rejected authorization
+    # LinkedIn authorization error
     # --------------------------------------------------------
 
     if error:
-        message = error_description or error
+
+        message = (
+            error_description
+            or error
+        )
 
         raise HTTPException(
             status_code=400,
-            detail=f"LinkedIn authorization failed: {message}",
+            detail=(
+                "LinkedIn authorization failed: "
+                f"{message}"
+            ),
         )
 
     if not code:
@@ -438,11 +436,13 @@ async def linkedin_callback(
             detail="LinkedIn state is missing",
         )
 
+
     # --------------------------------------------------------
     # Verify state
     # --------------------------------------------------------
 
     try:
+
         jwt.decode(
             state,
             SECRET_KEY,
@@ -450,13 +450,15 @@ async def linkedin_callback(
         )
 
     except JWTError as exc:
+
         raise HTTPException(
             status_code=400,
             detail="Invalid or expired LinkedIn state",
         ) from exc
 
+
     # --------------------------------------------------------
-    # Make sure credentials exist
+    # Check LinkedIn credentials
     # --------------------------------------------------------
 
     if not LINKEDIN_CLIENT_ID:
@@ -471,6 +473,7 @@ async def linkedin_callback(
             detail="LINKEDIN_CLIENT_SECRET is not configured",
         )
 
+
     # --------------------------------------------------------
     # Exchange authorization code for access token
     # --------------------------------------------------------
@@ -483,74 +486,105 @@ async def linkedin_callback(
         "client_secret": LINKEDIN_CLIENT_SECRET,
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(
+        timeout=30.0
+    ) as client:
 
         token_response = await client.post(
             LINKEDIN_TOKEN_URL,
             data=token_data,
             headers={
-                "Content-Type": "application/x-www-form-urlencoded"
+                "Content-Type":
+                    "application/x-www-form-urlencoded"
             },
         )
 
+
     if token_response.status_code != 200:
+
         raise HTTPException(
             status_code=400,
             detail={
-                "message": "Unable to get LinkedIn access token",
-                "linkedin_response": token_response.text,
+                "message":
+                    "Unable to get LinkedIn access token",
+                "linkedin_response":
+                    token_response.text,
             },
         )
 
+
     token_json = token_response.json()
 
-    access_token = token_json.get("access_token")
+    access_token = token_json.get(
+        "access_token"
+    )
+
 
     if not access_token:
+
         raise HTTPException(
             status_code=400,
-            detail="LinkedIn did not return an access token",
+            detail=(
+                "LinkedIn did not return "
+                "an access token"
+            ),
         )
 
+
     # --------------------------------------------------------
-    # Get LinkedIn user information using OpenID Connect
+    # Get LinkedIn user information
     # --------------------------------------------------------
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(
+        timeout=30.0
+    ) as client:
 
         userinfo_response = await client.get(
             LINKEDIN_USERINFO_URL,
             headers={
-                "Authorization": f"Bearer {access_token}",
+                "Authorization":
+                    f"Bearer {access_token}",
             },
         )
 
+
     if userinfo_response.status_code != 200:
+
         raise HTTPException(
             status_code=400,
             detail={
-                "message": "Unable to get LinkedIn user information",
-                "linkedin_response": userinfo_response.text,
+                "message":
+                    "Unable to get LinkedIn user information",
+                "linkedin_response":
+                    userinfo_response.text,
             },
         )
 
-    linkedin_user = userinfo_response.json()
+
+    linkedin_user = (
+        userinfo_response.json()
+    )
 
     linkedin_id = linkedin_user.get("sub")
     linkedin_name = linkedin_user.get("name")
     linkedin_email = linkedin_user.get("email")
 
+
     if not linkedin_id:
+
         raise HTTPException(
             status_code=400,
             detail="LinkedIn user ID was not returned",
         )
 
+
     if not linkedin_email:
+
         raise HTTPException(
             status_code=400,
             detail="LinkedIn email was not returned",
         )
+
 
     # --------------------------------------------------------
     # Find existing Social9 user
@@ -558,20 +592,29 @@ async def linkedin_callback(
 
     user = (
         db.query(User)
-        .filter(User.email == linkedin_email.lower())
+        .filter(
+            User.email
+            == linkedin_email.lower()
+        )
         .first()
     )
 
+
     # --------------------------------------------------------
-    # Create Social9 account if user doesn't exist
+    # Create Social9 account if necessary
     # --------------------------------------------------------
 
     if user is None:
 
-        temporary_password = secrets.token_urlsafe(32)
+        temporary_password = (
+            secrets.token_urlsafe(32)
+        )
 
         user = User(
-            name=linkedin_name or "LinkedIn User",
+            name=(
+                linkedin_name
+                or "LinkedIn User"
+            ),
             email=linkedin_email.lower(),
             hashed_password=hash_password(
                 temporary_password
@@ -582,13 +625,17 @@ async def linkedin_callback(
         db.commit()
         db.refresh(user)
 
+
     # --------------------------------------------------------
     # Create Social9 JWT
     # --------------------------------------------------------
 
     social9_token = create_access_token(
-        data={"sub": user.email}
+        data={
+            "sub": user.email
+        }
     )
+
 
     # --------------------------------------------------------
     # Return to Flutter
@@ -613,3 +660,5 @@ async def linkedin_callback(
         url=flutter_redirect,
         status_code=302,
     )
+
+
