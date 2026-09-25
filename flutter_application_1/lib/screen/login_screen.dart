@@ -1,11 +1,12 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'account_service.dart';
 import 'auth_service.dart';
-import 'dashboard_screen.dart';
+import 'products_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -59,10 +60,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return;
 
+        // ======================================================
+        // AFTER LOGIN → PRODUCTS PAGE
+        // ======================================================
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => const DashboardScreen(),
+            builder: (_) => const ProductsScreen(),
           ),
         );
       } else {
@@ -123,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final attemptId =
           attempt['attempt_id'] as String;
 
-      // Open LinkedIn in browser.
+      // Open social login in browser.
       final opened = await launchUrl(
         Uri.parse(authorizationUrl),
         mode: LaunchMode.externalApplication,
@@ -135,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      // Poll FastAPI until LinkedIn login is completed.
+      // Poll FastAPI until social login is completed.
       for (var count = 0; count < 120; count++) {
         await Future<void>.delayed(
           const Duration(seconds: 2),
@@ -148,7 +153,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final loginStatus = status['status'];
 
-        // Login completed
+        // ======================================================
+        // SOCIAL LOGIN COMPLETED
+        // ======================================================
+
         if (loginStatus == 'completed') {
           final accessToken =
               status['access_token'] as String?;
@@ -170,17 +178,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
           if (!mounted) return;
 
+          // ====================================================
+          // AFTER SOCIAL LOGIN → PRODUCTS PAGE
+          // ====================================================
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => const DashboardScreen(),
+              builder: (_) => const ProductsScreen(),
             ),
           );
 
           return;
         }
 
-        // Login failed
+        // ======================================================
+        // SOCIAL LOGIN FAILED
+        // ======================================================
+
         if (loginStatus == 'failed') {
           throw Exception(
             status['error'] ??
@@ -188,7 +203,10 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
 
-        // Login attempt expired
+        // ======================================================
+        // SOCIAL LOGIN EXPIRED
+        // ======================================================
+
         if (loginStatus == 'expired') {
           throw Exception(
             '$provider login session expired',
