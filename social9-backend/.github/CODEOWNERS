@@ -1,0 +1,5 @@
+# Require the repository owner to review every backend change.
+* @Vivekkmr13
+
+# Keep ownership rules and automation changes under the same review requirement.
+/.github/ @Vivekkmr13
