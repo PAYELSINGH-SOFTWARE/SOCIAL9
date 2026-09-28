@@ -5,7 +5,7 @@ import os
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -29,16 +29,13 @@ from .workspace import router as workspace_router
 
 
 def configured_cors_origins() -> list[str]:
-    """Return local and explicitly configured browser origins.
-
-    Production origins are supplied through environment variables so the API
-    can be deployed before the final Vercel URL is known without changing code.
-    """
+    """Return local and explicitly configured browser origins."""
     origins = {
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://social9-web.vercel.app",
     }
+
     for value in (
         os.getenv("FRONTEND_URL", ""),
         *os.getenv("CORS_ORIGINS", "").split(","),
@@ -46,6 +43,7 @@ def configured_cors_origins() -> list[str]:
         origin = value.strip().rstrip("/")
         if origin:
             origins.add(origin)
+
     return sorted(origins)
 
 
@@ -56,6 +54,7 @@ def seed_demo_user() -> None:
     email = os.getenv("DEMO_USER_EMAIL", "demo@social9.in").strip().lower()
     password = os.getenv("DEMO_USER_PASSWORD", "Social9Demo!")
     database = SessionLocal()
+
     try:
         if database.query(User).filter(User.email == email).first() is None:
             database.add(
@@ -78,9 +77,14 @@ async def lifespan(_: FastAPI):
     scheduler_task = None
 
     async def publishing_loop() -> None:
-        interval = max(10, int(os.getenv("PUBLISHING_SCHEDULER_INTERVAL_SECONDS", "30")))
+        interval = max(
+            10,
+            int(os.getenv("PUBLISHING_SCHEDULER_INTERVAL_SECONDS", "30")),
+        )
+
         while not stop_event.is_set():
             database = SessionLocal()
+
             try:
                 await asyncio.to_thread(process_due_posts, database)
             except Exception:
@@ -88,18 +92,25 @@ async def lifespan(_: FastAPI):
                 logger.exception("Scheduled publishing pass failed")
             finally:
                 database.close()
+
             try:
                 await asyncio.wait_for(stop_event.wait(), timeout=interval)
             except TimeoutError:
                 pass
 
     scheduler_default = "true" if os.getenv("RENDER_EXTERNAL_URL") else "false"
-    if os.getenv("PUBLISHING_SCHEDULER_ENABLED", scheduler_default).lower() == "true":
+
+    if (
+        os.getenv("PUBLISHING_SCHEDULER_ENABLED", scheduler_default).lower()
+        == "true"
+    ):
         scheduler_task = asyncio.create_task(publishing_loop())
+
     try:
         yield
     finally:
         stop_event.set()
+
         if scheduler_task:
             scheduler_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -123,6 +134,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", tags=["System"])
+def home() -> dict[str, str]:
+    return {
+        "message": "Social9 backend is running",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
+@app.head("/", include_in_schema=False)
+def home_head() -> Response:
+    return Response(status_code=200)
 
 
 @app.get("/health", tags=["System"])
