@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -17,6 +18,11 @@ class AuthService {
         "email": email,
         "password": password,
       }),
+    ).timeout(
+      const Duration(seconds: 60),
+      onTimeout: () => throw TimeoutException(
+        'The server took too long to respond. Please try again. If you were signing up, try signing in first in case your account was created.',
+      ),
     );
   }
 
@@ -35,6 +41,11 @@ class AuthService {
         "email": email,
         "password": password,
       }),
+    ).timeout(
+      const Duration(seconds: 60),
+      onTimeout: () => throw TimeoutException(
+        'The server took too long to respond. Please try again. If you were signing up, try signing in first in case your account was created.',
+      ),
     );
   }
 }
