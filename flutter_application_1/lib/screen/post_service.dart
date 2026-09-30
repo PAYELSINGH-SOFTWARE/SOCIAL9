@@ -1,13 +1,12 @@
-import 'api_config.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PostService {
-  static const String baseUrl = ApiConfig.baseUrl;
+static const String baseUrl = "https://social9-1.onrender.com";
   static Future<Map<String, String>> _headers() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(ApiConfig.tokenKey);
+    final token = prefs.getString('token');
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -21,7 +20,7 @@ class PostService {
     DateTime? scheduledFor,
     bool publishNow = false,
   }) async {
-    final response = await http.post(
+    return http.post(
       Uri.parse('$baseUrl/posts'),
       headers: await _headers(),
       body: jsonEncode({
@@ -29,22 +28,9 @@ class PostService {
         'platforms': platforms,
         'media': media,
         'scheduled_for': scheduledFor?.toUtc().toIso8601String(),
-        'post_type':
-            media.any(
-              (item) => RegExp(
-                r'\.(mp4|mov)$',
-                caseSensitive: false,
-              ).hasMatch(item['name'] ?? ''),
-            )
-            ? 'video'
-            : 'post',
+        'publish_now': publishNow,
       }),
     );
-    if (publishNow && response.statusCode == 201) {
-      final post = jsonDecode(response.body) as Map<String, dynamic>;
-      return publish(post['id'] as int);
-    }
-    return response;
   }
 
   static Future<http.Response> publish(int id) async {
@@ -68,3 +54,4 @@ class PostService {
     );
   }
 }
+

@@ -19,7 +19,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   void refresh() => setState(() {
-    analytics = AnalyticsService.summary();
+    analytics = AnalyticsService.performance();
   });
 
   String metricValue(Map<String, dynamic> metrics, String key) {
@@ -81,7 +81,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           }
 
           final data = snapshot.data!;
-          final metrics = data;
+          final available = data['available'] == true;
+          final metrics = data['metrics'] as Map<String, dynamic>;
+          final reason = data['reason']?.toString();
           return RefreshIndicator(
             onRefresh: () async => refresh(),
             child: ListView(
@@ -92,7 +94,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     const Icon(Icons.work, color: Colors.blue),
                     const SizedBox(width: 8),
                     Text(
-                      'Publishing performance',
+                      'LinkedIn post performance',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ],
@@ -101,17 +103,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.12),
+                    color: available
+                        ? Colors.green.withValues(alpha: 0.12)
+                        : Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.cloud_done),
+                      Icon(available ? Icons.cloud_done : Icons.lock_outline),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Post activity across your connected accounts.',
+                          available
+                              ? 'Live lifetime metrics from LinkedIn.'
+                              : reason ?? 'LinkedIn analytics is unavailable.',
                         ),
                       ),
                     ],
@@ -129,55 +135,63 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   childAspectRatio: 1.25,
                   children: [
                     metricCard(
-                      'Total Posts',
-                      metricValue(metrics, 'total_posts'),
+                      'Impressions',
+                      metricValue(metrics, 'impressions'),
                       Icons.visibility,
                       Colors.indigo,
                     ),
                     metricCard(
-                      'Drafts',
-                      metricValue(metrics, 'drafts'),
+                      'Members Reached',
+                      metricValue(metrics, 'members_reached'),
                       Icons.people_alt,
                       Colors.deepPurple,
                     ),
                     metricCard(
-                      'Scheduled',
-                      metricValue(metrics, 'scheduled'),
+                      'Reactions',
+                      metricValue(metrics, 'reactions'),
                       Icons.thumb_up_alt,
                       Colors.blue,
                     ),
                     metricCard(
-                      'Published',
-                      metricValue(metrics, 'published'),
+                      'Comments',
+                      metricValue(metrics, 'comments'),
                       Icons.comment,
                       Colors.teal,
                     ),
                     metricCard(
-                      'Failed',
-                      metricValue(metrics, 'failed'),
+                      'Reshares',
+                      metricValue(metrics, 'reshares'),
                       Icons.repeat,
                       Colors.orange,
                     ),
                     metricCard(
-                      'Publishing',
-                      metricValue(metrics, 'publishing'),
+                      'Post Saves',
+                      metricValue(metrics, 'post_saves'),
                       Icons.bookmark,
                       Colors.pink,
                     ),
                     metricCard(
-                      'Provider Published',
-                      metricValue(metrics, 'provider_published'),
+                      'Post Sends',
+                      metricValue(metrics, 'post_sends'),
                       Icons.send,
                       Colors.green,
                     ),
                     metricCard(
-                      'Preview Published',
-                      metricValue(metrics, 'preview_published'),
+                      'Link Clicks',
+                      metricValue(metrics, 'link_clicks'),
                       Icons.ads_click,
                       Colors.redAccent,
                     ),
                   ],
                 ),
+                if (!available) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Values are intentionally shown as — until LinkedIn grants '
+                    'analytics access. vCueSocial9 does not display estimated or '
+                    'fabricated engagement numbers.',
+                  ),
+                ],
               ],
             ),
           );
@@ -186,3 +200,4 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 }
+

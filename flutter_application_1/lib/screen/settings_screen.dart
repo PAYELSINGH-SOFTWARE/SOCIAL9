@@ -42,15 +42,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       final url = Uri.parse(await AccountService.authorizationUrl(provider));
       final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
       if (!opened) throw Exception('Could not open the authorization page');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'After authorizing, return here and refresh Connected Accounts.',
-            ),
-          ),
-        );
-      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -120,3 +111,4 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 }
+

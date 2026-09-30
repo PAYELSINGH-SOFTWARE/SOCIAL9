@@ -1,16 +1,13 @@
-import 'api_config.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AnalyticsService {
-  static const String baseUrl = ApiConfig.baseUrl;
+  static const String baseUrl = "https://social9-1.onrender.com";
 
   static Future<Map<String, String>> _headers() async {
-    final token = (await SharedPreferences.getInstance()).getString(
-      ApiConfig.tokenKey,
-    );
+    final token = (await SharedPreferences.getInstance()).getString('token');
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -40,21 +37,9 @@ class AnalyticsService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  static Future<Map<String, dynamic>> summary() async {
-    final data = await _get('/analytics/summary');
-    final overview = Map<String, dynamic>.from(data['overview'] as Map);
-    final channels = data['channels'] as List<dynamic>;
-    return {
-      ...overview,
-      'success_rate': overview['publish_success_rate'],
-      'posts_by_platform': {
-        for (final channel in channels)
-          channel['provider'] as String: channel['post_count'],
-      },
-      'connected_accounts': [
-        for (final channel in channels)
-          if (channel['connected'] == true) channel['provider'],
-      ],
-    };
-  }
+  static Future<Map<String, dynamic>> summary() => _get('/analytics/summary');
+
+  static Future<Map<String, dynamic>> performance() =>
+      _get('/analytics/performance');
 }
+

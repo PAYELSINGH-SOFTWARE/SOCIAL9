@@ -1,4 +1,3 @@
-import 'api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -60,7 +59,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.remove(ApiConfig.tokenKey);
+    await prefs.remove('token');
 
     if (!mounted) return;
 
