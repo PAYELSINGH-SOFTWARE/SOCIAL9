@@ -1,0 +1,60 @@
+services:
+  - type: web
+    name: social9-backend
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SOCIAL9_SECRET_KEY
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "10080"
+      - key: SEED_DEMO_USER
+        value: "false"
+      - key: EXPOSE_DEV_AUTH_TOKENS
+        value: "false"
+      - key: OAUTH_MOCK_MODE
+        value: "true"
+      - key: INSTAGRAM_OAUTH_MOCK_MODE
+        value: "true"
+      - key: LINKEDIN_OAUTH_MOCK_MODE
+        value: "true"
+      - key: BILLING_MOCK_MODE
+        value: "true"
+      - key: INSTAGRAM_SCOPES
+        value: "instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights"
+      - key: LINKEDIN_SCOPES
+        value: "openid profile email w_member_social"
+      - key: LINKEDIN_API_VERSION
+        value: "202606"
+      - key: INSTAGRAM_API_VERSION
+        value: "v23.0"
+      - key: PUBLISHING_SCHEDULER_ENABLED
+        value: "true"
+      - key: PUBLISHING_SCHEDULER_INTERVAL_SECONDS
+        value: "30"
+      - key: MEDIA_STORAGE_BACKEND
+        value: "local"
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_PUBLIC_BASE_URL
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_KEY_PREFIX
+        value: "social9"
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
