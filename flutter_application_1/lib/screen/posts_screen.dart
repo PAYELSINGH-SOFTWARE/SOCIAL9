@@ -42,15 +42,15 @@ class _PostsScreenState extends State<PostsScreen> {
       final body = response.body.isEmpty
           ? <String, dynamic>{}
           : jsonDecode(response.body) as Map<String, dynamic>;
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && body['status'] == 'published') {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Published on LinkedIn')));
+        ).showSnackBar(const SnackBar(content: Text('Post published')));
         refresh();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(body['detail']?.toString() ?? 'Publishing failed'),
+            content: Text(body['publish_error']?.toString() ?? body['detail']?.toString() ?? 'Publishing failed'),
           ),
         );
         refresh();

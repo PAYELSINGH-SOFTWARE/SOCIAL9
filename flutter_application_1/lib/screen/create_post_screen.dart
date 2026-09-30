@@ -124,12 +124,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         publishNow: publishNow,
       );
       if (!mounted) return;
-      if (response.statusCode == 201) {
+      final result = jsonDecode(response.body) as Map<String, dynamic>;
+      if ((response.statusCode == 201 || response.statusCode == 200) &&
+          (!publishNow || result['status'] == 'published')) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               publishNow
-                  ? 'Published on LinkedIn'
+                  ? 'Post published'
                   : schedule
                   ? 'Post scheduled'
                   : 'Draft saved',
@@ -141,7 +143,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         final body = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(body['detail']?.toString() ?? 'Could not save post'),
+            content: Text(
+              body['publish_error']?.toString() ??
+                  body['detail']?.toString() ??
+                  'Post was not published. Check Your Posts before retrying.',
+            ),
           ),
         );
       }
@@ -292,4 +298,3 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 }
-

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'auth_service.dart';
-import 'products_screen.dart';
+import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -27,11 +27,9 @@ class _SignupScreenState extends State<SignupScreen> {
     if (nameController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
@@ -43,28 +41,27 @@ class _SignupScreenState extends State<SignupScreen> {
       final response = await AuthService.signup(
         nameController.text.trim(),
         emailController.text.trim(),
-        passwordController.text.trim(),
+        passwordController.text,
       );
 
-      if (response.statusCode == 200 ||
-          response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Account created successfully"),
+            content: Text(
+              "Account created. Sign in with your email and password.",
+            ),
           ),
         );
 
         // ======================================================
-        // AFTER SIGNUP → PRODUCTS PAGE
+        // AFTER SIGNUP → LOGIN
         // ======================================================
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const ProductsScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
         );
       } else {
         String message = "Signup failed";
@@ -76,10 +73,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
           if (detail is String) {
             message = detail;
-          } else if (detail is List &&
-              detail.isNotEmpty) {
-            message =
-                detail.first["msg"]?.toString() ?? message;
+          } else if (detail is List && detail.isNotEmpty) {
+            message = detail.first["msg"]?.toString() ?? message;
           }
         } catch (_) {
           if (response.body.isNotEmpty) {
@@ -89,20 +84,16 @@ class _SignupScreenState extends State<SignupScreen> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) {
         setState(() {
@@ -128,10 +119,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Create Account"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Create Account"), centerTitle: true),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -139,20 +127,14 @@ class _SignupScreenState extends State<SignupScreen> {
             children: [
               const SizedBox(height: 30),
 
-              const Icon(
-                Icons.person_add,
-                size: 70,
-              ),
+              const Icon(Icons.person_add, size: 70),
 
               const SizedBox(height: 20),
 
               const Text(
                 "Create your Social9 account",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 10),
@@ -160,9 +142,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const Text(
                 "Start managing and growing your social media with Social9.",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
+                style: TextStyle(color: Colors.grey),
               ),
 
               const SizedBox(height: 35),
@@ -170,7 +150,6 @@ class _SignupScreenState extends State<SignupScreen> {
               // =================================================
               // NAME
               // =================================================
-
               TextField(
                 controller: nameController,
                 textInputAction: TextInputAction.next,
@@ -186,11 +165,9 @@ class _SignupScreenState extends State<SignupScreen> {
               // =================================================
               // EMAIL
               // =================================================
-
               TextField(
                 controller: emailController,
-                keyboardType:
-                    TextInputType.emailAddress,
+                keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: "Email",
@@ -204,12 +181,10 @@ class _SignupScreenState extends State<SignupScreen> {
               // =================================================
               // PASSWORD
               // =================================================
-
               TextField(
                 controller: passwordController,
                 obscureText: true,
-                textInputAction:
-                    TextInputAction.done,
+                textInputAction: TextInputAction.done,
                 decoration: const InputDecoration(
                   labelText: "Password",
                   border: OutlineInputBorder(),
@@ -227,19 +202,16 @@ class _SignupScreenState extends State<SignupScreen> {
               // =================================================
               // SIGN UP BUTTON
               // =================================================
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed:
-                      isLoading ? null : signup,
+                  onPressed: isLoading ? null : signup,
                   child: isLoading
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child:
-                              CircularProgressIndicator(),
+                          child: CircularProgressIndicator(),
                         )
                       : const Text(
                           "Sign Up",
@@ -256,10 +228,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const Text(
                 "By creating an account, you can explore Social9 products and choose a plan.",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ],
           ),

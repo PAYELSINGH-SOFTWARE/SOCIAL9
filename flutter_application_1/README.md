@@ -1,60 +1,58 @@
-# vCueSocial9
+# Social9 Flutter client
 
-vCueSocial9 is a Flutter client with a FastAPI backend for creating, scheduling, and managing Instagram and LinkedIn content.
+This repository contains the Flutter app. It uses the separate, unchanged
+Vivekkmr13/social9-backend API. Do not copy backend code or credentials here.
 
-## Backend
-
-1. Copy `.env.example` to `.env` and replace every secret. The backend loads
-   this file automatically; `.env` is ignored by Git.
-2. Register the callback URLs in the Meta and LinkedIn developer portals.
-3. Install and run:
-
-```powershell
-python -m pip install -r backened/requirements.txt
-python -m uvicorn backened.main:app --reload
-```
-
-API documentation is available at `"https://social9-1.onrender.com/auth/login"social9-1.onrender.com/docs`.
-## Instagram setup
-
-The Instagram button uses Meta's **Instagram API with Instagram Login**. It
-requires an Instagram professional account (Business or Creator).
-
-1. In [Meta for Developers](https://developers.facebook.com/apps/), create or
-   open a Business app and add the **Instagram** product.
-2. In **Instagram > API setup with Instagram login**, copy the Instagram App
-   ID and Instagram App Secret into your local `.env`:
-
-   ```dotenv
-   INSTAGRAM_CLIENT_ID=your-instagram-app-id
-   INSTAGRAM_CLIENT_SECRET=your-instagram-app-secret
-   INSTAGRAM_REDIRECT_URI="https://social9-1.onrender.com/auth/login"social9-1.onrender.com/accounts/instagram/callback
-   ```
-
-3. Add this exact value to **Valid OAuth Redirect URIs** in the Meta dashboard:
-   `"https://social9-1.onrender.com/auth/login"social9-1.onrender.com/accounts/instagram/callback`. The host, port, scheme,
-   path, and trailing slash must match exactly.
-4. Enable `instagram_business_basic` and
-   `instagram_business_content_publish`. While the Meta app is in Development
-   mode, add the Instagram account under **App roles** and accept the invitation
-   in Instagram. Switch the app Live only after the required permissions have
-   passed App Review.
-5. Restart the backend after changing `.env`, then click **Continue with
-   Instagram**.
-
-Do not paste the Instagram App Secret into Flutter/Dart code or commit `.env`.
-For a deployed app, replace the loopback callback with an HTTPS backend URL and
-register that exact production URL with Meta.
-
-## Flutter client
+## Run
 
 ```powershell
 flutter pub get
 flutter run
 ```
 
-The development client uses `"https://social9-1.onrender.com/auth/login"social9-1.onrender.com`. Android emulators should use `http://10.0.2.2:8000` in the service files.
+The default API is https://social9-backend-ghqu.onrender.com, as documented in
+the supplied backend ZIP. To choose another deployment, use an origin without
+a trailing slash:
 
-## OAuth security
+```powershell
+flutter run --dart-define=SOCIAL9_API_URL=https://your-api.example.com
+flutter build web --dart-define=SOCIAL9_API_URL=https://your-api.example.com
+```
 
-OAuth state expires after ten minutes. Provider access and refresh tokens are encrypted before database storage. Use separate production values for `SOCIAL9_SECRET_KEY` and `SOCIAL9_TOKEN_ENCRYPTION_KEY` and never commit real credentials.
+The configuration is in lib/screen/api_config.dart. Flutter does not load .env.
+Never include database passwords, OAuth secrets, or token-encryption keys in
+Flutter builds. The backend stays in its own repository and deployment.
+
+## Integration behavior
+
+- Email login/signup use /auth/login and /auth/signup. Signup returns a user,
+  not a login token, so the app returns to sign-in after registration.
+- Saved tokens are scoped to the API URL; old-backend sessions are ignored.
+  Accounts and posts are not migrated between backend databases.
+- Social sign-in is unavailable in this backend. Sign in using email, then
+  connect Instagram or LinkedIn in Connected Accounts.
+- Connections use /social-accounts and /social-accounts/provider-status;
+  authorization uses POST /social-accounts/{provider}/connect. The existing
+  backend redirects OAuth completion to its website. Return to Flutter and
+  refresh Connected Accounts to see the result.
+- Posts use /posts. Publish Now first creates a draft and then calls
+  /posts/{id}/publish. HTTP success alone is not treated as published: the
+  returned post status must also be published. If publishing fails, inspect
+  Your Posts and retry the existing draft to avoid creating duplicates.
+- MP4/MOV uploads select the backend video type; mixed image/video uploads
+  remain subject to backend validation.
+- Dashboard and publishing analytics use /analytics/summary. The old
+  LinkedIn engagement endpoint does not exist in this backend, so the screen
+  shows publishing counts, including separate provider and preview counts.
+- Requests use the backend's default brand. This update does not add a brand
+  switcher or change the existing local subscription screens.
+
+## Deployment checks
+
+Run flutter analyze and flutter test. Test real login, account connection,
+draft creation, scheduling and publishing with a test account before release.
+The production service URL comes from the supplied source; deployment health
+and authenticated provider flows must be verified in your environment.
+Flutter web requires its origin to be allowed by the backend's existing CORS
+configuration. This change does not modify that configuration or backend repo.
+It does not disconnect, delete, or redeploy any existing Render service.
