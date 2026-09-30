@@ -1,3 +1,4 @@
+import 'screen/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,7 +14,7 @@ class VCueSocial9App extends StatelessWidget {
 
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("token");
+    final token = prefs.getString(ApiConfig.tokenKey);
 
     return token != null && token.isNotEmpty;
   }

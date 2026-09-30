@@ -2,9 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import 'account_service.dart';
+import 'api_config.dart';
 import 'auth_service.dart';
 import 'products_screen.dart';
 import 'signup_screen.dart';
@@ -21,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   bool isLoading = false;
-  bool isSocialLoading = false;
 
   // ============================================================
   // NORMAL EMAIL/PASSWORD LOGIN
@@ -30,11 +28,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     if (emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
@@ -45,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await AuthService.login(
         emailController.text.trim(),
-        passwordController.text.trim(),
+        passwordController.text,
       );
 
       if (response.statusCode == 200) {
@@ -53,10 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final prefs = await SharedPreferences.getInstance();
 
-        await prefs.setString(
-          "token",
-          data["access_token"],
-        );
+        await prefs.setString(ApiConfig.tokenKey, data["access_token"]);
 
         if (!mounted) return;
 
@@ -66,9 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const ProductsScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const ProductsScreen()),
         );
       } else {
         String message = "Login failed";
@@ -85,152 +76,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) {
         setState(() {
           isLoading = false;
-        });
-      }
-    }
-  }
-
-  // ============================================================
-  // SOCIAL LOGIN
-  // ============================================================
-
-  Future<void> socialLogin(String provider) async {
-    setState(() {
-      isSocialLoading = true;
-    });
-
-    try {
-      // Ask FastAPI to create a social-login attempt.
-      final attempt =
-          await AccountService.startSocialLogin(provider);
-
-      final authorizationUrl =
-          attempt['authorization_url'] as String;
-
-      final attemptId =
-          attempt['attempt_id'] as String;
-
-      // Open social login in browser.
-      final opened = await launchUrl(
-        Uri.parse(authorizationUrl),
-        mode: LaunchMode.externalApplication,
-      );
-
-      if (!opened) {
-        throw Exception(
-          'Could not open $provider login',
-        );
-      }
-
-      // Poll FastAPI until social login is completed.
-      for (var count = 0; count < 120; count++) {
-        await Future<void>.delayed(
-          const Duration(seconds: 2),
-        );
-
-        final status =
-            await AccountService.socialLoginStatus(
-          attemptId,
-        );
-
-        final loginStatus = status['status'];
-
-        // ======================================================
-        // SOCIAL LOGIN COMPLETED
-        // ======================================================
-
-        if (loginStatus == 'completed') {
-          final accessToken =
-              status['access_token'] as String?;
-
-          if (accessToken == null ||
-              accessToken.isEmpty) {
-            throw Exception(
-              'Social login completed but no access token was returned',
-            );
-          }
-
-          final prefs =
-              await SharedPreferences.getInstance();
-
-          await prefs.setString(
-            'token',
-            accessToken,
-          );
-
-          if (!mounted) return;
-
-          // ====================================================
-          // AFTER SOCIAL LOGIN → PRODUCTS PAGE
-          // ====================================================
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const ProductsScreen(),
-            ),
-          );
-
-          return;
-        }
-
-        // ======================================================
-        // SOCIAL LOGIN FAILED
-        // ======================================================
-
-        if (loginStatus == 'failed') {
-          throw Exception(
-            status['error'] ??
-                '$provider login failed',
-          );
-        }
-
-        // ======================================================
-        // SOCIAL LOGIN EXPIRED
-        // ======================================================
-
-        if (loginStatus == 'expired') {
-          throw Exception(
-            '$provider login session expired',
-          );
-        }
-      }
-
-      throw Exception(
-        '$provider login timed out',
-      );
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              error.toString(),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isSocialLoading = false;
         });
       }
     }
@@ -276,8 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               TextField(
                 controller: emailController,
-                keyboardType:
-                    TextInputType.emailAddress,
+                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: "Email",
                   border: OutlineInputBorder(),
@@ -301,10 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed:
-                      isLoading || isSocialLoading
-                          ? null
-                          : login,
+                  onPressed: isLoading ? null : login,
                   child: isLoading
                       ? const CircularProgressIndicator()
                       : const Text("Login"),
@@ -313,94 +168,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsets.symmetric(
-                      horizontal: 12,
-                    ),
-                    child: Text('OR'),
-                  ),
-                  Expanded(
-                    child: Divider(),
-                  ),
-                ],
+              const Text(
+                'Sign in with email, then connect Instagram or LinkedIn in Connected Accounts.',
               ),
-
-              const SizedBox(height: 16),
-
-              // =================================================
-              // INSTAGRAM
-              // =================================================
-
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed:
-                      isSocialLoading
-                          ? null
-                          : () => socialLogin(
-                                'instagram',
-                              ),
-                  icon: const Icon(
-                    Icons.camera_alt,
-                  ),
-                  label: const Text(
-                    'Continue with Instagram',
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // =================================================
-              // LINKEDIN
-              // =================================================
-
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed:
-                      isSocialLoading
-                          ? null
-                          : () => socialLogin(
-                                'linkedin',
-                              ),
-                  icon: const Icon(
-                    Icons.work,
-                  ),
-                  label: const Text(
-                    'Continue with LinkedIn',
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 20),
-
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Don't have an account?",
-                  ),
+                  const Text("Don't have an account?"),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const SignupScreen(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const SignupScreen()),
                       );
                     },
-                    child: const Text(
-                      "Sign Up",
-                    ),
+                    child: const Text("Sign Up"),
                   ),
                 ],
               ),
