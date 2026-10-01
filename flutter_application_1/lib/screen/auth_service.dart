@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = "https://social9-1.onrender.com";
+  static const String baseUrl = "https://social9-backend-payelapp.onrender.com";
 
   static Future<http.Response> login(
     String email,

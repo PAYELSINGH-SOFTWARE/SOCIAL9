@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AnalyticsService {
-  static const String baseUrl = "https://social9-1.onrender.com";
+  static const String baseUrl = "https://social9-backend-payelapp.onrender.com";
 
   static Future<Map<String, String>> _headers() async {
     final token = (await SharedPreferences.getInstance()).getString('token');
