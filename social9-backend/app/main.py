@@ -34,6 +34,8 @@ def configured_cors_origins() -> list[str]:
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://social9-web.vercel.app",
+        "https://social9.io",
+        "https://www.social9.io",
     }
 
     for value in (
@@ -95,7 +97,7 @@ async def lifespan(_: FastAPI):
 
             try:
                 await asyncio.wait_for(stop_event.wait(), timeout=interval)
-            except TimeoutError:
+            except asyncio.TimeoutError:
                 pass
 
     scheduler_default = "true" if os.getenv("RENDER_EXTERNAL_URL") else "false"
@@ -124,7 +126,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-UPLOADS_DIRECTORY.mkdir(exist_ok=True)
+UPLOADS_DIRECTORY.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIRECTORY), name="uploads")
 
 app.add_middleware(

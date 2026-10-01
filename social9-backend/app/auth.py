@@ -41,8 +41,8 @@ def expose_dev_tokens() -> bool:
 
 
 def email_verification_enabled() -> bool:
-    """Allow the shared API to support the original Social9 users table."""
-    return os.getenv("EMAIL_VERIFICATION_ENABLED", "true").lower() == "true"
+    """Email verification is not required for Social9 accounts."""
+    return False
 
 
 def user_response(user: User) -> UserResponse:
@@ -93,12 +93,6 @@ def login(data: LoginRequest, database: Session = Depends(get_db)) -> LoginRespo
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
-        )
-
-    if email_verification_enabled() and not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Verify your email before signing in",
         )
 
     return LoginResponse(
