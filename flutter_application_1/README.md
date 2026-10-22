@@ -1,60 +1,71 @@
-# vCueSocial9
+# Social9 Flutter app
 
-vCueSocial9 is a Flutter client with a FastAPI backend for creating, scheduling, and managing Instagram and LinkedIn content.
+The Flutter client uses the same live Render API as the Social9 website:
+`https://social9-backend-ghqu.onrender.com`. Its deployed OpenAPI contract is
+the source of truth; the local `../../social9-backend` checkout may be older.
 
-## Backend
+## Included workspace features
 
-1. Copy `.env.example` to `.env` and replace every secret. The backend loads
-   this file automatically; `.env` is ignored by Git.
-2. Register the callback URLs in the Meta and LinkedIn developer portals.
-3. Install and run:
+- Email signup, login, session restore, logout, and password-reset requests
+- Responsive overview with real publishing metrics and recommendations
+- Instagram, LinkedIn, and Facebook connection, reconnection, and disconnection
+- Browser authorization windows with account-status polling; native apps open
+  the provider in the device browser and detect completion when returning
+- Brand creation and switching with `X-Brand-ID` scope on workspace requests
+- Composer with images/video, AI caption actions, drafts, scheduling, and
+  immediate publishing
+- The website's 26 templates, ranked by brand context and connected channels
+- Searchable content library, post editing, month calendar, daily content ideas,
+  AI plans, and action center
+- Photo cropping, rotation, upload previews, and photo collages
+- Instagram/Facebook insights, charts, CSV export, and growth scenarios
+- Agency competitors, teams, approvals, revision history, and publishing reports
+- Live plan pricing, coupons, browser/Android checkout, and server-verified access
+- Live profile data and email verification/password recovery
 
-```powershell
-python -m pip install -r backened/requirements.txt
-python -m uvicorn backened.main:app --reload
-```
+Sign in with the same email and password used on Social9 web. Provider OAuth
+connects a channel to this signed-in account from **Accounts**. The existing
+Render callback URLs stay unchanged. After provider approval the backend saves
+the connection; return to the app and it will refresh automatically. Browser
+pop-ups must be allowed for this step.
 
-API documentation is available at `"https://social9-1.onrender.com/auth/login"social9-1.onrender.com/docs`.
-## Instagram setup
-
-The Instagram button uses Meta's **Instagram API with Instagram Login**. It
-requires an Instagram professional account (Business or Creator).
-
-1. In [Meta for Developers](https://developers.facebook.com/apps/), create or
-   open a Business app and add the **Instagram** product.
-2. In **Instagram > API setup with Instagram login**, copy the Instagram App
-   ID and Instagram App Secret into your local `.env`:
-
-   ```dotenv
-   INSTAGRAM_CLIENT_ID=your-instagram-app-id
-   INSTAGRAM_CLIENT_SECRET=your-instagram-app-secret
-   INSTAGRAM_REDIRECT_URI="https://social9-1.onrender.com/auth/login"social9-1.onrender.com/accounts/instagram/callback
-   ```
-
-3. Add this exact value to **Valid OAuth Redirect URIs** in the Meta dashboard:
-   `"https://social9-1.onrender.com/auth/login"social9-1.onrender.com/accounts/instagram/callback`. The host, port, scheme,
-   path, and trailing slash must match exactly.
-4. Enable `instagram_business_basic` and
-   `instagram_business_content_publish`. While the Meta app is in Development
-   mode, add the Instagram account under **App roles** and accept the invitation
-   in Instagram. Switch the app Live only after the required permissions have
-   passed App Review.
-5. Restart the backend after changing `.env`, then click **Continue with
-   Instagram**.
-
-Do not paste the Instagram App Secret into Flutter/Dart code or commit `.env`.
-For a deployed app, replace the loopback callback with an HTTPS backend URL and
-register that exact production URL with Meta.
-
-## Flutter client
+## Run locally
 
 ```powershell
 flutter pub get
-flutter run
+flutter run -d chrome
 ```
 
-The development client uses `"https://social9-1.onrender.com/auth/login"social9-1.onrender.com`. Android emulators should use `http://10.0.2.2:8000` in the service files.
+Browser development uses `http://localhost:3000`, configured in
+`web_dev_config.yaml`. The deployed API accepts this origin; Flutter's random
+ports are rejected during the browser's CORS preflight. After changing this
+configuration, stop the running Flutter app and start it again (hot reload
+does not change the server port). For an explicit port selection, run:
 
-## OAuth security
+```powershell
+flutter run -d chrome --web-hostname localhost --web-port 3000
+```
 
-OAuth state expires after ten minutes. Provider access and refresh tokens are encrypted before database storage. Use separate production values for `SOCIAL9_SECRET_KEY` and `SOCIAL9_TOKEN_ENCRYPTION_KEY` and never commit real credentials.
+The default API is `https://social9-backend-ghqu.onrender.com`. Point a build
+at a local or alternate backend with a compile-time value:
+
+```powershell
+flutter run --dart-define=SOCIAL9_API_URL=http://127.0.0.1:8000
+```
+
+For an Android emulator, use `http://10.0.2.2:8000` instead of loopback.
+
+## Verify
+
+```powershell
+flutter analyze
+flutter test
+flutter build web --release
+flutter build apk --debug
+```
+
+`test/app_flows_test.dart` covers login-to-workspace navigation, brand scope,
+expired sessions, provider connection contracts, publishing, and phone layouts.
+
+Provider OAuth credentials, access tokens, and secrets belong in the backend;
+never add them to Dart source or commit local `.env` files.

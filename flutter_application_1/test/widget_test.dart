@@ -10,7 +10,8 @@ void main() {
     await tester.pumpWidget(const VCueSocial9App());
     await tester.pumpAndSettle();
 
-    expect(find.text('Login'), findsOneWidget);
-    expect(find.text('Sign Up'), findsOneWidget);
+    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Create an account'), findsOneWidget);
   });
 }

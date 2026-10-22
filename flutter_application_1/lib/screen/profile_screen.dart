@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'account_service.dart';
+import 'auth_service.dart';
+import 'settings_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -8,279 +12,172 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool editing = false;
-
-  final TextEditingController nameController =
-      TextEditingController(text: 'Social9 User');
-
-  final TextEditingController emailController =
-      TextEditingController(text: 'user@example.com');
-
-  final TextEditingController usernameController =
-      TextEditingController(text: 'social9user');
+  late Future<(Map<String, dynamic>, List<Map<String, dynamic>>)> profile;
 
   @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    usernameController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    refresh();
   }
 
-  void saveProfile() {
-    setState(() {
-      editing = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated successfully'),
+  void refresh() => setState(() {
+    profile = Future.wait([AuthService.me(), AccountService.list()]).then(
+      (values) => (
+        values[0] as Map<String, dynamic>,
+        values[1] as List<Map<String, dynamic>>,
       ),
     );
-  }
-
-  Widget profileField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    bool enabled = true,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        enabled: editing && enabled,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          border: const OutlineInputBorder(),
-        ),
-      ),
-    );
-  }
-
-  Widget connectedAccount({
-    required String name,
-    required IconData icon,
-    required String status,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          child: Icon(icon),
-        ),
-        title: Text(
-          name,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(status),
-        trailing: const Icon(
-          Icons.check_circle,
-          color: Colors.green,
-        ),
-      ),
-    );
-  }
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        actions: [
-          IconButton(
-            tooltip: editing ? 'Cancel' : 'Edit Profile',
-            icon: Icon(
-              editing ? Icons.close : Icons.edit,
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Profile'),
+      actions: [
+        IconButton(onPressed: refresh, icon: const Icon(Icons.refresh)),
+      ],
+    ),
+    body: FutureBuilder<(Map<String, dynamic>, List<Map<String, dynamic>>)>(
+      future: profile,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: OutlinedButton(
+              onPressed: refresh,
+              child: const Text('Try again'),
             ),
-            onPressed: () {
-              setState(() {
-                editing = !editing;
-              });
-            },
-          ),
-        ],
-      ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-
+          );
+        }
+        final user = snapshot.data!.$1;
+        final accounts = snapshot.data!.$2;
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 60),
           children: [
-
-            // PROFILE PHOTO
-            const Center(
+            Center(
               child: CircleAvatar(
-                radius: 55,
-                child: Icon(
-                  Icons.person,
-                  size: 60,
+                radius: 48,
+                child: Text(
+                  _initials(user['name']?.toString() ?? ''),
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
-
-            const SizedBox(height: 15),
-
-            const Center(
-              child: Text(
-                'Social9 User',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            const SizedBox(height: 12),
+            Text(
+              user['name']?.toString() ?? 'Social9 user',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
-
-            const SizedBox(height: 5),
-
-            const Center(
-              child: Text(
-                'Manage your Social9 account',
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
+            Text(
+              user['email']?.toString() ?? '',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.black54),
             ),
-
-            const SizedBox(height: 30),
-
-            // PERSONAL INFORMATION
-            const Text(
-              'Personal Information',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            profileField(
-              label: 'Name',
-              controller: nameController,
-              icon: Icons.person,
-            ),
-
-            profileField(
-              label: 'Email',
-              controller: emailController,
-              icon: Icons.email,
-              enabled: false,
-            ),
-
-            profileField(
-              label: 'Username',
-              controller: usernameController,
-              icon: Icons.alternate_email,
-            ),
-
-            if (editing)
-              SizedBox(
-                height: 50,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.save),
-                  label: const Text(
-                    'Save Profile',
-                    style: TextStyle(
-                      fontSize: 16,
+            const SizedBox(height: 24),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.badge_outlined),
+                    title: const Text('Name'),
+                    subtitle: Text(user['name']?.toString() ?? '—'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.mail_outline),
+                    title: const Text('Email'),
+                    subtitle: Text(user['email']?.toString() ?? '—'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(
+                      user['is_verified'] == true
+                          ? Icons.verified_outlined
+                          : Icons.warning_amber,
+                    ),
+                    title: const Text('Email status'),
+                    subtitle: Text(
+                      user['is_verified'] == true
+                          ? 'Verified'
+                          : 'Verification required',
                     ),
                   ),
-                  onPressed: saveProfile,
-                ),
-              ),
-
-            const SizedBox(height: 30),
-
-            // CONNECTED ACCOUNTS
-            const Text(
-              'Connected Accounts',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                ],
               ),
             ),
-
-            const SizedBox(height: 15),
-
-            connectedAccount(
-              name: 'Instagram',
-              icon: Icons.camera_alt,
-              status: 'Connected',
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Connected profiles',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  ).then((_) => refresh()),
+                  child: const Text('Manage'),
+                ),
+              ],
             ),
-
-            connectedAccount(
-              name: 'LinkedIn',
-              icon: Icons.work,
-              status: 'Connected',
-            ),
-
-            connectedAccount(
-              name: 'Facebook',
-              icon: Icons.facebook,
-              status: 'Not connected',
-            ),
-
-            const SizedBox(height: 20),
-
-            // ACCOUNT INFORMATION
-            const Text(
-              'Account',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.security,
+            if (accounts.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('No social accounts connected yet.'),
                 ),
-                title: const Text(
-                  'Account Security',
+              )
+            else
+              for (final account in accounts)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        child: Icon(
+                          account['provider'] == 'instagram'
+                              ? Icons.camera_alt_outlined
+                              : Icons.work_outline,
+                        ),
+                      ),
+                      title: Text(
+                        account['account_name']?.toString() ??
+                            account['provider'].toString(),
+                      ),
+                      subtitle: Text(account['provider'].toString()),
+                      trailing: const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
                 ),
-                subtitle: const Text(
-                  'Manage your account security',
-                ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                ),
-                onTap: () {},
-              ),
-            ),
-
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.notifications,
-                ),
-                title: const Text(
-                  'Notifications',
-                ),
-                subtitle: const Text(
-                  'Manage notification preferences',
-                ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                ),
-                onTap: () {},
-              ),
-            ),
-
-            const SizedBox(height: 20),
           ],
-        ),
-      ),
-    );
+        );
+      },
+    ),
+  );
+
+  String _initials(String value) {
+    final parts = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((item) => item.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'S9';
+    return parts.take(2).map((item) => item[0].toUpperCase()).join();
   }
 }
-

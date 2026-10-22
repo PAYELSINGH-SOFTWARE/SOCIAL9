@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'analytics_screen.dart';
+import 'billing_service.dart';
 import 'create_post_screen.dart';
 import 'plans_screen.dart';
 import 'subscription_screen.dart';
@@ -24,10 +24,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Future<void> loadSubscriptionStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final active =
-        prefs.getBool('has_active_subscription') ?? false;
+    var active = false;
+    try {
+      active = (await BillingService.subscription())['is_paid'] == true;
+    } catch (_) {
+      active = false;
+    }
 
     if (!mounted) return;
 
@@ -37,17 +39,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
     });
   }
 
-  void openPaidFeature({
-    required Widget screen,
-    required String featureName,
-  }) {
+  void openPaidFeature({required Widget screen, required String featureName}) {
     if (hasActiveSubscription) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => screen,
-        ),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
       return;
     }
 
@@ -73,9 +67,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const PlansScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const PlansScreen()),
                 ).then((_) {
                   loadSubscriptionStatus();
                 });
@@ -99,9 +91,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 18),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -109,13 +99,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 28,
-                  child: Icon(
-                    icon,
-                    size: 28,
-                  ),
-                ),
+                CircleAvatar(radius: 28, child: Icon(icon, size: 28)),
                 const SizedBox(width: 15),
                 Expanded(
                   child: Text(
@@ -126,11 +110,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                   ),
                 ),
-                if (locked)
-                  const Icon(
-                    Icons.lock,
-                    size: 22,
-                  ),
+                if (locked) const Icon(Icons.lock, size: 22),
               ],
             ),
             const SizedBox(height: 15),
@@ -147,11 +127,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: onPressed,
-                icon: Icon(
-                  locked
-                      ? Icons.lock_open
-                      : Icons.arrow_forward,
-                ),
+                icon: Icon(locked ? Icons.lock_open : Icons.arrow_forward),
                 label: Text(buttonText),
               ),
             ),
@@ -164,11 +140,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -182,9 +154,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const SubscriptionScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
               ).then((_) {
                 loadSubscriptionStatus();
               });
@@ -202,20 +172,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
             children: [
               const SizedBox(height: 10),
 
-              const Icon(
-                Icons.auto_awesome,
-                size: 65,
-              ),
+              const Icon(Icons.auto_awesome, size: 65),
 
               const SizedBox(height: 15),
 
               const Text(
                 'Welcome to Social9',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 10),
@@ -225,11 +189,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 'you manage, understand and grow your '
                 'social media presence.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey,
-                  height: 1.5,
-                ),
+                style: TextStyle(fontSize: 15, color: Colors.grey, height: 1.5),
               ),
 
               const SizedBox(height: 25),
@@ -251,9 +211,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           hasActiveSubscription
                               ? 'Your subscription is active'
                               : 'Choose a plan to unlock Social9 features',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -312,10 +270,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      const Icon(
-                        Icons.workspace_premium,
-                        size: 50,
-                      ),
+                      const Icon(Icons.workspace_premium, size: 50),
                       const SizedBox(height: 12),
                       const Text(
                         'Social9 Plans',
@@ -330,9 +285,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         'Choose the Social9 plan that fits '
                         'your social media needs.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 18),
                       SizedBox(
@@ -373,10 +326,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               const Text(
                 'Social9 — AI-powered social media management',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ],
           ),

@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
+import '../core/api_client.dart';
 import 'auth_service.dart';
-import 'products_screen.dart';
+import 'auth_recovery_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -13,102 +12,50 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final formKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-
-  bool isLoading = false;
-
-  // ============================================================
-  // SIGN UP
-  // ============================================================
+  bool loading = false;
+  bool obscure = true;
 
   Future<void> signup() async {
-    if (nameController.text.trim().isEmpty ||
-        emailController.text.trim().isEmpty ||
-        passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields"),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
+    if (!(formKey.currentState?.validate() ?? false)) return;
+    setState(() => loading = true);
     try {
-      final response = await AuthService.signup(
-        nameController.text.trim(),
-        emailController.text.trim(),
-        passwordController.text.trim(),
+      final data = await AuthService.signup(
+        nameController.text,
+        emailController.text,
+        passwordController.text,
       );
-
-      if (response.statusCode == 200 ||
-          response.statusCode == 201) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Account created successfully"),
-          ),
-        );
-
-        // ======================================================
-        // AFTER SIGNUP → PRODUCTS PAGE
-        // ======================================================
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const ProductsScreen(),
-          ),
-        );
-      } else {
-        String message = "Signup failed";
-
-        try {
-          final error = jsonDecode(response.body);
-
-          final detail = error["detail"];
-
-          if (detail is String) {
-            message = detail;
-          } else if (detail is List &&
-              detail.isNotEmpty) {
-            message =
-                detail.first["msg"]?.toString() ?? message;
-          }
-        } catch (_) {
-          if (response.body.isNotEmpty) {
-            message = response.body;
-          }
-        }
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-          ),
-        );
-      }
-    } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error: $e"),
+          content: Text(data['message']?.toString() ?? 'Account created.'),
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+      final user = data['user'] as Map?;
+      if (user?['is_verified'] == false) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AuthRecoveryScreen(
+              verifyEmail: true,
+              email: emailController.text.trim(),
+              token: data['verification_token']?.toString() ?? '',
+            ),
+          ),
+        );
       }
+      if (mounted) Navigator.pop(context);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -117,151 +64,110 @@ class _SignupScreenState extends State<SignupScreen> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-
     super.dispose();
   }
-
-  // ============================================================
-  // UI
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Create Account"),
-        centerTitle: true,
-      ),
-      body: SafeArea(
+      appBar: AppBar(title: const Text('Create account')),
+      body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              const SizedBox(height: 30),
-
-              const Icon(
-                Icons.person_add,
-                size: 70,
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "Create your Social9 account",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                "Start managing and growing your social media with Social9.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-
-              const SizedBox(height: 35),
-
-              // =================================================
-              // NAME
-              // =================================================
-
-              TextField(
-                controller: nameController,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: "Name",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // =================================================
-              // EMAIL
-              // =================================================
-
-              TextField(
-                controller: emailController,
-                keyboardType:
-                    TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // =================================================
-              // PASSWORD
-              // =================================================
-
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                textInputAction:
-                    TextInputAction.done,
-                decoration: const InputDecoration(
-                  labelText: "Password",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                onSubmitted: (_) {
-                  if (!isLoading) {
-                    signup();
-                  }
-                },
-              ),
-
-              const SizedBox(height: 25),
-
-              // =================================================
-              // SIGN UP BUTTON
-              // =================================================
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed:
-                      isLoading ? null : signup,
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child:
-                              CircularProgressIndicator(),
-                        )
-                      : const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Start your Social9 workspace',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Create, schedule, and review your social content in one place.',
+                      ),
+                      const SizedBox(height: 26),
+                      TextFormField(
+                        controller: nameController,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.name],
+                        decoration: const InputDecoration(
+                          labelText: 'Full name',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        validator: (value) => (value?.trim().length ?? 0) < 2
+                            ? 'Enter at least 2 characters'
+                            : null,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Email address',
+                          prefixIcon: Icon(Icons.mail_outline),
+                        ),
+                        validator: (value) =>
+                            value == null || !value.contains('@')
+                            ? 'Enter a valid email address'
+                            : null,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: passwordController,
+                        obscureText: obscure,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) {
+                          if (!loading) signup();
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          helperText: 'Use at least 8 characters',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(() => obscure = !obscure),
+                            icon: Icon(
+                              obscure ? Icons.visibility : Icons.visibility_off,
+                            ),
                           ),
                         ),
+                        validator: (value) => (value?.length ?? 0) < 8
+                            ? 'Password must be at least 8 characters'
+                            : null,
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: loading ? null : signup,
+                        child: loading
+                            ? const SizedBox.square(
+                                dimension: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Create account'),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'By continuing, you agree to the Social9 terms and privacy policy.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "By creating an account, you can explore Social9 products and choose a plan.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

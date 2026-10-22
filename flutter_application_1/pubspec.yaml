@@ -16,10 +16,11 @@ dependencies:
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   file_picker: ^10.3.10
-  app_links: ^7.2.1
+  app_links: ^7.0.0
   flutter_secure_storage: ^10.3.1
   fl_chart: ^1.2.0
   intl: ^0.20.3
+  razorpay_flutter: ^1.4.0
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +31,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/images/social9-web-mark.png
+    - assets/content_templates.json
     - assets/images/social9_logo.png
     - assets/images/vcuesocial9_logo_v2.png
     - assets/images/vcue9_wordmark_v3.png

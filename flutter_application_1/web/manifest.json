@@ -1,11 +1,11 @@
 ﻿{
-    "name": "vCueSocial9",
-    "short_name": "vCueSocial9",
+    "name": "Social9",
+    "short_name": "Social9",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F7F6FB",
+    "theme_color": "#6D4AFF",
+    "description": "Plan, publish, and grow with the Social9 workspace.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

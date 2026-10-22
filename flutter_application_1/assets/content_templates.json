@@ -1,0 +1,443 @@
+[
+  {
+    "id": "facebook-community",
+    "title": "Start a community conversation",
+    "goal": "Engagement",
+    "industry": "Any business",
+    "platform": "facebook",
+    "format": "Caption",
+    "caption": "We would love to hear from you: [question related to your business]. Share your experience in the comments and help us shape what comes next.",
+    "visual": "A welcoming team or product photo, or a simple text update.",
+    "cta": "Tell us what you think in the comments.",
+    "hashtags": [
+      "#Community",
+      "#LocalBusiness"
+    ],
+    "bestTime": "Try an evening when your community is active"
+  },
+  {
+    "id": "weekend-offer",
+    "title": "Weekend offer",
+    "goal": "Promotion",
+    "industry": "Any business",
+    "platform": "instagram",
+    "format": "Offer",
+    "caption": "Your weekend just got better. Enjoy [offer] at [business name] from [start date] to [end date]. Limited availability—save this post so you do not miss it.",
+    "visual": "A clean product or service photo with the offer and end date overlaid.",
+    "cta": "Message us or visit [link] to claim the offer.",
+    "hashtags": [
+      "#WeekendOffer",
+      "#LocalBusiness",
+      "#ShopLocal"
+    ],
+    "bestTime": "Thursday, 6–8 PM"
+  },
+  {
+    "id": "new-arrival",
+    "title": "New arrival reveal",
+    "goal": "Awareness",
+    "industry": "Retail",
+    "platform": "instagram",
+    "format": "Caption",
+    "caption": "Just arrived: [product name]. We chose it because [one customer benefit]. Available now in [store/location] while stock lasts.",
+    "visual": "One hero product image plus two close-up detail shots.",
+    "cta": "Which detail do you want to see next?",
+    "hashtags": [
+      "#NewArrival",
+      "#RetailFinds",
+      "#ShopSmall"
+    ],
+    "bestTime": "Tuesday, 11 AM–1 PM"
+  },
+  {
+    "id": "behind-scenes",
+    "title": "Behind the scenes",
+    "goal": "Trust",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Carousel",
+    "caption": "What happens before [product/service] reaches you? Here is a quick look at the care, people, and process behind [business name].",
+    "visual": "Three to five process photos from preparation to finished result.",
+    "cta": "Ask us anything about how we work.",
+    "hashtags": [
+      "#BehindTheScenes",
+      "#SmallBusiness",
+      "#OurProcess"
+    ],
+    "bestTime": "Wednesday, 12–2 PM"
+  },
+  {
+    "id": "customer-story",
+    "title": "Customer success story",
+    "goal": "Trust",
+    "industry": "Professional services",
+    "platform": "linkedin",
+    "format": "Caption",
+    "caption": "[Customer type] came to us with [challenge]. Together, we focused on [approach], helping them reach [verified outcome]. The biggest lesson: [practical insight].",
+    "visual": "A permission-approved customer image or a simple before-and-after graphic.",
+    "cta": "Facing a similar challenge? Let us talk.",
+    "hashtags": [
+      "#CustomerSuccess",
+      "#BusinessGrowth",
+      "#ClientExperience"
+    ],
+    "bestTime": "Tuesday, 9–11 AM"
+  },
+  {
+    "id": "quick-tip",
+    "title": "One practical tip",
+    "goal": "Education",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Educational post",
+    "caption": "A quick way to improve [topic]: [specific tip]. Start with [first step], then check [simple measure]. Small changes are easier to repeat—and repetition creates progress.",
+    "visual": "A bold tip headline with one supporting image or diagram.",
+    "cta": "Save this for the next time you work on [topic].",
+    "hashtags": [
+      "#QuickTip",
+      "#LearnWithUs",
+      "#BusinessTips"
+    ],
+    "bestTime": "Wednesday, 9–11 AM"
+  },
+  {
+    "id": "myth-fact",
+    "title": "Myth versus fact",
+    "goal": "Education",
+    "industry": "Professional services",
+    "platform": "linkedin",
+    "format": "Carousel",
+    "caption": "Myth: [common misconception]. Fact: [accurate correction]. What matters instead is [useful explanation].",
+    "visual": "Two-slide myth/fact comparison followed by one action slide.",
+    "cta": "What other question should we break down?",
+    "hashtags": [
+      "#MythVsFact",
+      "#IndustryInsights",
+      "#ExpertAdvice"
+    ],
+    "bestTime": "Thursday, 9–11 AM"
+  },
+  {
+    "id": "team-introduction",
+    "title": "Meet the team",
+    "goal": "Trust",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Caption",
+    "caption": "Meet [team member], our [role]. They help customers by [responsibility] and are known around here for [human detail].",
+    "visual": "A natural workplace portrait rather than a formal headshot.",
+    "cta": "Say hello to [name] in the comments.",
+    "hashtags": [
+      "#MeetTheTeam",
+      "#PeopleBehindTheBusiness",
+      "#TeamSpotlight"
+    ],
+    "bestTime": "Friday, 11 AM–1 PM"
+  },
+  {
+    "id": "founder-story",
+    "title": "Why we started",
+    "goal": "Awareness",
+    "industry": "Any business",
+    "platform": "linkedin",
+    "format": "Caption",
+    "caption": "We started [business name] after noticing [problem]. Our goal was simple: [mission]. Today, that still shapes how we [specific customer commitment].",
+    "visual": "An early photo, founder portrait, or meaningful workspace detail.",
+    "cta": "What made you start your journey?",
+    "hashtags": [
+      "#FounderStory",
+      "#Entrepreneurship",
+      "#OurWhy"
+    ],
+    "bestTime": "Monday, 9–11 AM"
+  },
+  {
+    "id": "this-or-that",
+    "title": "This or that",
+    "goal": "Engagement",
+    "industry": "Retail",
+    "platform": "instagram",
+    "format": "Story",
+    "caption": "Help us choose: [option A] or [option B]? Both have [shared benefit], but only one can be featured next.",
+    "visual": "A split-screen comparison with clear A and B labels.",
+    "cta": "Comment A or B—or vote in our Story.",
+    "hashtags": [
+      "#ThisOrThat",
+      "#YouChoose",
+      "#CommunityChoice"
+    ],
+    "bestTime": "Friday, 5–7 PM"
+  },
+  {
+    "id": "faq-answer",
+    "title": "Frequently asked question",
+    "goal": "Education",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Educational post",
+    "caption": "You asked: [question]? The short answer is [answer]. Here is what to consider before you decide: [two useful points].",
+    "visual": "The question as large text with the answer in the caption or next slide.",
+    "cta": "Send us the next question you want answered.",
+    "hashtags": [
+      "#FAQ",
+      "#HelpfulTips",
+      "#AskUs"
+    ],
+    "bestTime": "Tuesday, 12–2 PM"
+  },
+  {
+    "id": "limited-slots",
+    "title": "Limited appointments",
+    "goal": "Promotion",
+    "industry": "Salon",
+    "platform": "instagram",
+    "format": "Offer",
+    "caption": "A few [service] appointments are still open for [day/week]. If you have been waiting for [benefit], this is your sign.",
+    "visual": "A polished result photo with available dates in a subtle overlay.",
+    "cta": "DM ‘BOOK’ or use [booking link] to reserve a slot.",
+    "hashtags": [
+      "#SalonAppointments",
+      "#SelfCare",
+      "#BookNow"
+    ],
+    "bestTime": "Sunday, 6–8 PM"
+  },
+  {
+    "id": "transformation",
+    "title": "Before and after",
+    "goal": "Trust",
+    "industry": "Salon",
+    "platform": "instagram",
+    "format": "Carousel",
+    "caption": "From [starting point] to [finished result]. We focused on [technique/product] to create [benefit] while keeping [customer priority] in mind.",
+    "visual": "Matched before-and-after photos with customer permission.",
+    "cta": "Save this as inspiration for your next appointment.",
+    "hashtags": [
+      "#BeforeAndAfter",
+      "#SalonResults",
+      "#Transformation"
+    ],
+    "bestTime": "Wednesday, 6–8 PM"
+  },
+  {
+    "id": "dish-spotlight",
+    "title": "Dish spotlight",
+    "goal": "Promotion",
+    "industry": "Restaurant",
+    "platform": "instagram",
+    "format": "Caption",
+    "caption": "Today’s craving: [dish name]. Made with [key ingredients] and finished with [distinctive detail]. Available [days/times].",
+    "visual": "A close, naturally lit photo showing texture and portion.",
+    "cta": "Tag the person you would share this with.",
+    "hashtags": [
+      "#FoodSpotlight",
+      "#EatLocal",
+      "#FoodLovers"
+    ],
+    "bestTime": "11 AM–1 PM or 5–7 PM"
+  },
+  {
+    "id": "chef-process",
+    "title": "From kitchen to table",
+    "goal": "Awareness",
+    "industry": "Restaurant",
+    "platform": "instagram",
+    "format": "Carousel",
+    "caption": "It starts with [ingredient/process] and ends at your table. Swipe to see how our team prepares [dish] from start to finish.",
+    "visual": "Four process frames: ingredients, preparation, finishing, plated dish.",
+    "cta": "Which step surprised you most?",
+    "hashtags": [
+      "#KitchenStories",
+      "#MadeFresh",
+      "#RestaurantLife"
+    ],
+    "bestTime": "Saturday, 10 AM–12 PM"
+  },
+  {
+    "id": "review-highlight",
+    "title": "Review highlight",
+    "goal": "Trust",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Caption",
+    "caption": "“[Short approved customer review.]” Feedback like this reminds our team why [customer promise] matters every day. Thank you, [customer name/initials].",
+    "visual": "A branded quote card or customer-approved photo.",
+    "cta": "Already worked with us? Share your experience at [review link].",
+    "hashtags": [
+      "#CustomerReview",
+      "#ThankYou",
+      "#TrustedBusiness"
+    ],
+    "bestTime": "Thursday, 12–2 PM"
+  },
+  {
+    "id": "community-question",
+    "title": "Community question",
+    "goal": "Engagement",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Caption",
+    "caption": "We want your take: what is the hardest part about [relevant topic]? Choose one: A) [option], B) [option], or C) [option].",
+    "visual": "A simple branded question card with three choices.",
+    "cta": "Reply with A, B, or C and tell us why.",
+    "hashtags": [
+      "#CommunityQuestion",
+      "#YourOpinion",
+      "#LetsTalk"
+    ],
+    "bestTime": "Thursday, 4–6 PM"
+  },
+  {
+    "id": "five-minute-workout",
+    "title": "Five-minute routine",
+    "goal": "Education",
+    "industry": "Fitness",
+    "platform": "instagram",
+    "format": "Carousel",
+    "caption": "No full workout window today? Try this five-minute [goal] routine: [move 1], [move 2], and [move 3]. Adjust intensity to your level and stop if something feels wrong.",
+    "visual": "One movement per slide with time, form cue, and modification.",
+    "cta": "Save the routine and tell us when you finish.",
+    "hashtags": [
+      "#QuickWorkout",
+      "#FitnessRoutine",
+      "#MoveToday"
+    ],
+    "bestTime": "Monday, 6–8 AM"
+  },
+  {
+    "id": "member-milestone",
+    "title": "Member milestone",
+    "goal": "Trust",
+    "industry": "Fitness",
+    "platform": "instagram",
+    "format": "Caption",
+    "caption": "Celebrating [member name/initials] for [verified milestone]. Their consistency with [habit] made the difference—and we are proud to support the journey.",
+    "visual": "A member-approved photo or milestone board.",
+    "cta": "Drop a 👏 to celebrate this win.",
+    "hashtags": [
+      "#MemberSpotlight",
+      "#FitnessJourney",
+      "#Progress"
+    ],
+    "bestTime": "Friday, 6–8 PM"
+  },
+  {
+    "id": "case-study",
+    "title": "Mini case study",
+    "goal": "Trust",
+    "industry": "Professional services",
+    "platform": "linkedin",
+    "format": "Carousel",
+    "caption": "Challenge: [specific problem]. Approach: [what you changed]. Verified result: [measurable outcome]. Takeaway: [lesson others can apply].",
+    "visual": "Four slides covering challenge, approach, result, and takeaway.",
+    "cta": "Message us if you want to explore this approach for your business.",
+    "hashtags": [
+      "#CaseStudy",
+      "#ProfessionalServices",
+      "#BusinessResults"
+    ],
+    "bestTime": "Wednesday, 9–11 AM"
+  },
+  {
+    "id": "industry-opinion",
+    "title": "Industry point of view",
+    "goal": "Awareness",
+    "industry": "Professional services",
+    "platform": "linkedin",
+    "format": "Caption",
+    "caption": "A common conversation in [industry] right now is [trend]. Our view: [clear position], because [reason/evidence]. The practical implication for [audience] is [action].",
+    "visual": "A concise quote card featuring the central point of view.",
+    "cta": "Do you agree? Add your perspective below.",
+    "hashtags": [
+      "#IndustryInsights",
+      "#Leadership",
+      "#BusinessStrategy"
+    ],
+    "bestTime": "Tuesday, 8–10 AM"
+  },
+  {
+    "id": "restock-alert",
+    "title": "Restock alert",
+    "goal": "Promotion",
+    "industry": "Retail",
+    "platform": "instagram",
+    "format": "Story",
+    "caption": "Back by popular request: [product name] is restocked. Available in [variants/sizes] from today.",
+    "visual": "A short unpacking video or shelf-restock sequence.",
+    "cta": "Tap [link] or visit us before it sells out again.",
+    "hashtags": [
+      "#Restock",
+      "#BackInStock",
+      "#ShopLocal"
+    ],
+    "bestTime": "As soon as stock is available"
+  },
+  {
+    "id": "product-comparison",
+    "title": "Product comparison",
+    "goal": "Education",
+    "industry": "Retail",
+    "platform": "instagram",
+    "format": "Carousel",
+    "caption": "Choosing between [product A] and [product B]? Pick A when you need [benefit]. Pick B when [different need]. Here is the simplest way to decide.",
+    "visual": "Side-by-side cards comparing three meaningful features.",
+    "cta": "Save this guide or ask us for a recommendation.",
+    "hashtags": [
+      "#BuyingGuide",
+      "#ProductTips",
+      "#SmartShopping"
+    ],
+    "bestTime": "Wednesday, 12–2 PM"
+  },
+  {
+    "id": "service-explainer",
+    "title": "How our service works",
+    "goal": "Education",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Carousel",
+    "caption": "New here? Working with [business name] takes three simple steps: 1) [step], 2) [step], 3) [step]. You will always know what happens next.",
+    "visual": "One clear step per slide using consistent numbers and icons.",
+    "cta": "Ready to begin? Start at [link].",
+    "hashtags": [
+      "#HowItWorks",
+      "#EasyProcess",
+      "#CustomerExperience"
+    ],
+    "bestTime": "Monday, 11 AM–1 PM"
+  },
+  {
+    "id": "monthly-recap",
+    "title": "Monthly recap",
+    "goal": "Awareness",
+    "industry": "Any business",
+    "platform": "linkedin",
+    "format": "Carousel",
+    "caption": "This month at [business name]: [highlight 1], [highlight 2], and [highlight 3]. Thank you to everyone who helped move the work forward. Next month, we are focused on [priority].",
+    "visual": "A five-slide recap with one highlight per slide and a next-month preview.",
+    "cta": "Which update should we share more about?",
+    "hashtags": [
+      "#MonthlyRecap",
+      "#BusinessUpdate",
+      "#Progress"
+    ],
+    "bestTime": "Last weekday of the month, 10 AM"
+  },
+  {
+    "id": "event-invitation",
+    "title": "Event invitation",
+    "goal": "Promotion",
+    "industry": "Any business",
+    "platform": "both",
+    "format": "Offer",
+    "caption": "Join us for [event name] on [date] at [time]. Expect [two concrete takeaways or activities]. [Free/paid] entry with [registration requirement].",
+    "visual": "A clear event card with date, time, location, and one focal image.",
+    "cta": "Reserve your place at [link].",
+    "hashtags": [
+      "#LocalEvent",
+      "#YouAreInvited",
+      "#Community"
+    ],
+    "bestTime": "Post 10–14 days before the event"
+  }
+]

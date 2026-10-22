@@ -1,0 +1,5 @@
+# Keep Flutter's browser origin on the port trusted by the deployed API.
+# A random development port is rejected by the API's CORS policy.
+server:
+  host: localhost
+  port: 3000

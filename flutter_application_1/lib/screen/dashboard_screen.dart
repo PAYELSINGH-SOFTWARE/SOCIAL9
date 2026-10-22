@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/api_client.dart';
+import '../core/workspace_session.dart';
+import '../widgets/brand_switcher.dart';
+import 'brand_profile_screen.dart';
+import 'agency_screen.dart';
+import 'action_center_screen.dart';
 import 'analytics_screen.dart';
 import 'analytics_service.dart';
+import 'calendar_screen.dart';
 import 'create_post_screen.dart';
 import 'login_screen.dart';
 import 'posts_screen.dart';
-import 'settings_screen.dart';
 import 'profile_screen.dart';
-import 'products_screen.dart';
-import 'plans_screen.dart';
+import 'settings_screen.dart';
 import 'subscription_screen.dart';
+import 'templates_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,513 +27,536 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<Map<String, dynamic>> summary;
-
-  // TEMPORARY:
-  // true = Create Post is visible
-  // false = Create Post is hidden
-  //
-  // Later this will come from the user's real subscription
-  // status from the backend/payment system.
-  bool hasActiveSubscription = false;
+  String name = 'there';
+  final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
-    refreshSummary();
-    loadSubscriptionStatus();
-  }
-
-  void refreshSummary() {
-    setState(() {
-      summary = AnalyticsService.summary();
-    });
-  }
-
-  Future<void> loadSubscriptionStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final active =
-        prefs.getBool('has_active_subscription') ?? false;
-
-    if (!mounted) return;
-
-    setState(() {
-      hasActiveSubscription = active;
-    });
-  }
-
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.remove('token');
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
-      (route) => false,
-    );
-  }
-
-  Widget overviewCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return SizedBox(
-      width: 170,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: color,
-                size: 30,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget dashboardCard(
-    String title,
-    String subtitle,
-    IconData icon,
-    Widget screen,
-  ) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          radius: 25,
-          child: Icon(icon),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(subtitle),
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 18,
-        ),
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => screen,
-            ),
-          );
-
-          if (!mounted) return;
-
-          await loadSubscriptionStatus();
-          refreshSummary();
-        },
-      ),
-    );
-  }
-
-  Widget sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: 24,
-        bottom: 10,
-      ),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-      ),
-    );
-  }
-
-  Widget subscriptionMessage() {
-    if (hasActiveSubscription) {
-      return Card(
-        elevation: 2,
-        child: ListTile(
-          leading: const CircleAvatar(
-            child: Icon(Icons.check),
-          ),
-          title: const Text(
-            'Subscription Active',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          subtitle: const Text(
-            'Your paid Social9 features are unlocked.',
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      elevation: 2,
-      child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.lock),
-        ),
-        title: const Text(
-          'Choose a Social9 Plan',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: const Text(
-          'Choose a plan to unlock Create Post and paid features.',
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 18,
-        ),
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const PlansScreen(),
-            ),
-          );
-
-          if (!mounted) return;
-
-          await loadSubscriptionStatus();
-        },
-      ),
-    );
+    refresh();
+    WorkspaceSession.brandId.addListener(refresh);
+    _loadName();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'vCueSocial9 Dashboard',
+  void dispose() {
+    WorkspaceSession.brandId.removeListener(refresh);
+    super.dispose();
+  }
+
+  Future<void> _loadName() async {
+    final saved = (await SharedPreferences.getInstance()).getString(
+      'user_name',
+    );
+    if (mounted && saved != null && saved.trim().isNotEmpty) {
+      setState(() => name = saved.split(' ').first);
+    }
+  }
+
+  void refresh() {
+    if (mounted) {
+      setState(() {
+        summary = AnalyticsService.summary();
+      });
+    }
+  }
+
+  Future<void> logout() async {
+    await WorkspaceSession.clear();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
+
+  Future<void> open(Widget page) async {
+    scaffoldKey.currentState?.closeDrawer();
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    key: scaffoldKey,
+    appBar: AppBar(
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(48),
+        child: BrandSwitcher(),
+      ),
+      title: Row(
+        children: [
+          Image.asset('assets/images/social9-web-mark.png', width: 34, height: 34),
+          const SizedBox(width: 9),
+          const Text('Social9', style: TextStyle(fontWeight: FontWeight.w800)),
+        ],
+      ),
+      actions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: refresh,
+          icon: const Icon(Icons.refresh),
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh),
-            onPressed: () async {
-              refreshSummary();
-              await loadSubscriptionStatus();
-            },
-          ),
-          IconButton(
-            tooltip: 'Profile',
-            icon: const Icon(Icons.person),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ProfileScreen(),
+        IconButton(
+          tooltip: 'Profile',
+          onPressed: () => open(const ProfileScreen()),
+          icon: const Icon(Icons.account_circle_outlined),
+        ),
+      ],
+    ),
+    drawer: _WorkspaceDrawer(onOpen: open, onLogout: logout),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: () => open(const CreatePostScreen()),
+      icon: const Icon(Icons.add),
+      label: const Text('Create post'),
+    ),
+    body: FutureBuilder<Map<String, dynamic>>(
+      future: summary,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) return _error(snapshot.error);
+        return _dashboard(snapshot.data!);
+      },
+    ),
+  );
+
+  Widget _dashboard(Map<String, dynamic> data) {
+    final overview = Map<String, dynamic>.from(data['overview'] as Map? ?? {});
+    final consistency = Map<String, dynamic>.from(
+      data['consistency'] as Map? ?? {},
+    );
+    final upcoming = (data['upcoming_posts'] as List? ?? []).cast<Map>();
+    final suggestions = (data['suggestions'] as List? ?? []).cast<Map>();
+    return RefreshIndicator(
+      onRefresh: () async => refresh(),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Good to see you, $name.',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              );
-
-              if (!mounted) return;
-
-              await loadSubscriptionStatus();
-            },
-          ),
-          IconButton(
-            tooltip: 'Logout',
-            icon: const Icon(Icons.logout),
-            onPressed: logout,
+                const SizedBox(height: 5),
+                const Text(
+                  'Your content, schedule, and insights—together in one workspace.',
+                ),
+                const SizedBox(height: 22),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth > 760
+                        ? (constraints.maxWidth - 36) / 4
+                        : (constraints.maxWidth - 12) / 2;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _MetricCard(
+                          width: width,
+                          label: 'Published',
+                          value: overview['published'] ?? 0,
+                          icon: Icons.check_circle_outline,
+                          color: const Color(0xFF16855A),
+                        ),
+                        _MetricCard(
+                          width: width,
+                          label: 'Scheduled',
+                          value: overview['scheduled'] ?? 0,
+                          icon: Icons.schedule,
+                          color: const Color(0xFF6D4AFF),
+                        ),
+                        _MetricCard(
+                          width: width,
+                          label: 'Drafts',
+                          value: overview['drafts'] ?? 0,
+                          icon: Icons.edit_note,
+                          color: const Color(0xFF596170),
+                        ),
+                        _MetricCard(
+                          width: width,
+                          label: 'Connected',
+                          value: overview['connected_accounts'] ?? 0,
+                          icon: Icons.link,
+                          color: const Color(0xFFFF6A4D),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth > 760;
+                    final focus = _FocusCard(
+                      consistency: consistency,
+                      overview: overview,
+                      onOpen: () => open(const CalendarScreen()),
+                    );
+                    final quick = _QuickActions(onOpen: open);
+                    return wide
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 3, child: focus),
+                              const SizedBox(width: 14),
+                              Expanded(flex: 2, child: quick),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              focus,
+                              const SizedBox(height: 14),
+                              quick,
+                            ],
+                          );
+                  },
+                ),
+                if (suggestions.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _heading('For you', 'Recommendations'),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 155,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: suggestions.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final item = suggestions[index];
+                        return SizedBox(
+                          width: 280,
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.auto_awesome,
+                                    color: Color(0xFF6D4AFF),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    item['title'].toString(),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Expanded(
+                                    child: Text(
+                                      item['body'].toString(),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                _heading('Coming up', 'Next scheduled posts'),
+                const SizedBox(height: 10),
+                Card(
+                  child: upcoming.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(22),
+                          child: Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Nothing scheduled yet. Give your next idea a time slot.',
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => open(const CreatePostScreen()),
+                                child: const Text('Schedule a post'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Column(
+                          children: upcoming
+                              .take(3)
+                              .map(
+                                (post) => ListTile(
+                                  leading: const CircleAvatar(
+                                    child: Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    post['caption'].toString(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Text(
+                                    (post['platforms'] as List).join(' + '),
+                                  ),
+                                  trailing: const Chip(
+                                    label: Text('Scheduled'),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          refreshSummary();
-          await loadSubscriptionStatus();
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text(
-              'Welcome back 👋',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
+    );
+  }
+
+  Widget _heading(String eyebrow, String title) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        eyebrow.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11,
+          letterSpacing: 1.2,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF6D4AFF),
+        ),
+      ),
+      Text(
+        title,
+        style: Theme.of(
+          context,
+        ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+      ),
+    ],
+  );
+
+  Widget _error(Object? error) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off, size: 52),
+          const SizedBox(height: 12),
+          const Text(
+            'We could not open your workspace.',
+            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            error is ApiException ? error.message : error.toString(),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          FilledButton(onPressed: refresh, child: const Text('Try again')),
+        ],
+      ),
+    ),
+  );
+}
+
+class _WorkspaceDrawer extends StatelessWidget {
+  const _WorkspaceDrawer({required this.onOpen, required this.onLogout});
+  final Future<void> Function(Widget) onOpen;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = <(String, IconData, Widget)>[
+      ('Agency workspace', Icons.groups_outlined, const AgencyScreen()),
+      ('Brand context', Icons.business_outlined, const BrandProfileScreen()),
+      ('Accounts', Icons.link, const SettingsScreen()),
+      ('Create post', Icons.add_box_outlined, const CreatePostScreen()),
+      (
+        'Templates',
+        Icons.auto_awesome_mosaic_outlined,
+        const TemplatesScreen(),
+      ),
+      ('Content library', Icons.article_outlined, const PostsScreen()),
+      ('Calendar', Icons.calendar_month_outlined, const CalendarScreen()),
+      ('Action center', Icons.bolt_outlined, const ActionCenterScreen()),
+      ('Analytics', Icons.analytics_outlined, const AnalyticsScreen()),
+      (
+        'Plans & billing',
+        Icons.credit_card_outlined,
+        const SubscriptionScreen(),
+      ),
+      ('Profile', Icons.person_outline, const ProfileScreen()),
+    ];
+    return NavigationDrawer(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 18),
+          child: Row(
+            children: [
+              Image.asset(
+                'assets/images/social9-web-mark.png',
+                width: 40,
+                height: 40,
               ),
-            ),
-
-            const SizedBox(height: 6),
-
-            const Text(
-              'Manage and grow your social media from one place.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+              const SizedBox(width: 10),
+              const Text(
+                'Social9',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
-            ),
-
-            sectionTitle('Your Social9'),
-
-            dashboardCard(
-              'Profile',
-              'View and manage your Social9 profile',
-              Icons.person,
-              const ProfileScreen(),
-            ),
-
-            const SizedBox(height: 12),
-
-            subscriptionMessage(),
-
-            sectionTitle('Publishing Overview'),
-
-            FutureBuilder<Map<String, dynamic>>(
-              future: summary,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return Card(
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.error_outline,
-                      ),
-                      title: const Text(
-                        'Unable to load analytics summary',
-                      ),
-                      subtitle: Text(
-                        snapshot.error.toString(),
-                      ),
-                      trailing: TextButton(
-                        onPressed: refreshSummary,
-                        child: const Text('Retry'),
-                      ),
-                    ),
-                  );
-                }
-
-                final data = snapshot.data ?? {};
-
-                final platforms =
-                    (data['posts_by_platform']
-                            as Map<String, dynamic>?) ??
-                        {};
-
-                final connected =
-                    (data['connected_accounts'] as List?)
-                            ?.cast<String>() ??
-                        [];
-
-                return Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    overviewCard(
-                      'Total Posts',
-                      '${data['total_posts'] ?? 0}',
-                      Icons.article,
-                      Colors.indigo,
-                    ),
-                    overviewCard(
-                      'Drafts',
-                      '${data['drafts'] ?? 0}',
-                      Icons.edit_note,
-                      Colors.blueGrey,
-                    ),
-                    overviewCard(
-                      'Scheduled',
-                      '${data['scheduled'] ?? 0}',
-                      Icons.schedule,
-                      Colors.deepPurple,
-                    ),
-                    overviewCard(
-                      'Published',
-                      '${data['published'] ?? 0}',
-                      Icons.check_circle,
-                      Colors.green,
-                    ),
-                    overviewCard(
-                      'Failed',
-                      '${data['failed'] ?? 0}',
-                      Icons.error_outline,
-                      Colors.red,
-                    ),
-                    overviewCard(
-                      'Success Rate',
-                      '${data['success_rate'] ?? 0}%',
-                      Icons.trending_up,
-                      Colors.teal,
-                    ),
-
-                    if (connected.contains('instagram'))
-                      overviewCard(
-                        'Instagram Posts',
-                        '${platforms['instagram'] ?? 0}',
-                        Icons.camera_alt,
-                        Colors.pink,
-                      ),
-
-                    if (connected.contains('linkedin'))
-                      overviewCard(
-                        'LinkedIn Posts',
-                        '${platforms['linkedin'] ?? 0}',
-                        Icons.work,
-                        Colors.blue,
-                      ),
-                  ],
-                );
-              },
-            ),
-
-            sectionTitle('Social Media Management'),
-
-            // CREATE POST IS ONLY AVAILABLE
-            // WHEN THE USER HAS AN ACTIVE PLAN.
-            if (hasActiveSubscription) ...[
-              dashboardCard(
-                'Create Post',
-                'Create, publish, and schedule posts',
-                Icons.post_add,
-                const CreatePostScreen(),
-              ),
-
-              const SizedBox(height: 12),
             ],
-
-            dashboardCard(
-              'Performance Analytics',
-              'View reach, impressions, engagement and performance',
-              Icons.analytics,
-              const AnalyticsScreen(),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(24, 0, 24, 10),
+          child: Text(
+            'YOUR WORKSPACE',
+            style: TextStyle(
+              fontSize: 11,
+              letterSpacing: 1.1,
+              fontWeight: FontWeight.w700,
+              color: Colors.black45,
             ),
+          ),
+        ),
+        for (final entry in entries)
+          ListTile(
+            leading: Icon(entry.$2),
+            title: Text(entry.$1),
+            onTap: () => onOpen(entry.$3),
+          ),
+        const Divider(height: 30),
+        ListTile(
+          leading: const Icon(Icons.logout),
+          title: const Text('Sign out'),
+          onTap: onLogout,
+        ),
+      ],
+    );
+  }
+}
 
-            const SizedBox(height: 12),
-
-            dashboardCard(
-              'Posts',
-              'View scheduled, published and existing posts',
-              Icons.schedule,
-              const PostsScreen(),
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.width,
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+  final double width;
+  final String label;
+  final Object value;
+  final IconData icon;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: width,
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(17),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 13),
+            Text(
+              '$value',
+              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
             ),
+            Text(label, style: const TextStyle(color: Colors.black54)),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
-            const SizedBox(height: 12),
-
-            dashboardCard(
-              'Settings',
-              'Manage your connected social media accounts',
-              Icons.settings,
-              const SettingsScreen(),
-            ),
-
-            // ====================================================
-            // SOCIAL9 PRODUCTS
-            // ====================================================
-
-            sectionTitle('Social9 Products'),
-
-            dashboardCard(
-              'Explore Social9',
-              'Explore Social9 AI, analytics and growth products',
-              Icons.shopping_bag,
-              const ProductsScreen(),
-            ),
-
-            const SizedBox(height: 12),
-
-            dashboardCard(
-              'Plans & Pricing',
-              'Choose a Social9 plan that fits your needs',
-              Icons.workspace_premium,
-              const PlansScreen(),
-            ),
-
-            const SizedBox(height: 12),
-
-            dashboardCard(
-              'My Subscription',
-              'View your current plan and subscription status',
-              Icons.card_membership,
-              const SubscriptionScreen(),
-            ),
-
-            const SizedBox(height: 25),
-
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                icon: const Icon(
-                  Icons.workspace_premium,
-                ),
-                label: Text(
-                  hasActiveSubscription
-                      ? 'Manage Subscription'
-                      : 'Choose a Social9 Plan',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+class _FocusCard extends StatelessWidget {
+  const _FocusCard({
+    required this.consistency,
+    required this.overview,
+    required this.onOpen,
+  });
+  final Map<String, dynamic> consistency;
+  final Map<String, dynamic> overview;
+  final VoidCallback onOpen;
+  @override
+  Widget build(BuildContext context) {
+    final score =
+        (((overview['connected_accounts'] as num?) ?? 0) * 15 +
+                ((overview['published'] as num?) ?? 0) * 6 +
+                ((overview['scheduled'] as num?) ?? 0) * 5)
+            .round()
+            .clamp(0, 100);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Row(
+          children: [
+            SizedBox.square(
+              dimension: 76,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: score / 100,
+                    strokeWidth: 8,
+                    backgroundColor: const Color(0xFFEAE7F2),
                   ),
-                ),
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => hasActiveSubscription
-                          ? const SubscriptionScreen()
-                          : const PlansScreen(),
+                  Text(
+                    '$score',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                     ),
-                  );
-
-                  if (!mounted) return;
-
-                  await loadSubscriptionStatus();
-                },
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 20),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'WORKSPACE MOMENTUM',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF6D4AFF),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    consistency['message']?.toString() ??
+                        'Your next publishing streak starts here.',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onOpen,
+                    child: const Text('Open calendar →'),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -535,3 +564,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({required this.onOpen});
+  final Future<void> Function(Widget) onOpen;
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        children: [
+          _action(
+            'Write a post',
+            Icons.edit_outlined,
+            () => onOpen(const CreatePostScreen()),
+          ),
+          _action(
+            'Open calendar',
+            Icons.calendar_month_outlined,
+            () => onOpen(const CalendarScreen()),
+          ),
+          _action(
+            'Find an idea',
+            Icons.auto_awesome_outlined,
+            () => onOpen(const TemplatesScreen()),
+          ),
+        ],
+      ),
+    ),
+  );
+  Widget _action(String label, IconData icon, VoidCallback action) => ListTile(
+    leading: Icon(icon),
+    title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+    trailing: const Icon(Icons.arrow_forward, size: 18),
+    onTap: action,
+  );
+}
