@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/core/api_client.dart';
 import 'package:flutter_application_1/core/workspace_session.dart';
 import 'package:flutter_application_1/core/social9_theme.dart';
-import 'package:flutter_application_1/main.dart';
+import 'package:flutter_application_1/legacy_app.dart';
 import 'package:flutter_application_1/screen/account_service.dart';
 import 'package:flutter_application_1/screen/brand_service.dart';
 import 'package:flutter_application_1/screen/post_service.dart';

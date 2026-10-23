@@ -2,6 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
+class CheckoutFailure implements Exception {
+  CheckoutFailure(this.message);
+  final String message;
+  @override
+  String toString() => message;
+}
+
 Future<Map<String, dynamic>?> openCheckout(Map session) async {
   if (!Platform.isAndroid && !Platform.isIOS) {
     throw Exception('Checkout is available on Android, iOS, and the browser.');
@@ -21,9 +28,15 @@ Future<Map<String, dynamic>?> openCheckout(Map session) async {
   });
   checkout.on(Razorpay.EVENT_PAYMENT_ERROR, (PaymentFailureResponse response) {
     if (!completer.isCompleted) {
-      completer.completeError(
-        Exception(response.message ?? 'Payment was cancelled or failed.'),
-      );
+      if (response.code == Razorpay.PAYMENT_CANCELLED) {
+        completer.complete(null);
+      } else {
+        completer.completeError(
+          CheckoutFailure(
+            response.message ?? 'Payment failed. No charge was completed.',
+          ),
+        );
+      }
     }
   });
   try {
@@ -37,7 +50,7 @@ Future<Map<String, dynamic>?> openCheckout(Map session) async {
         'name': session['customer_name'],
         'email': session['customer_email'],
       },
-      'theme': {'color': '#6D4AFF'},
+      'theme': session['theme'] ?? {'color': '#8e44ad'},
     });
     return await completer.future;
   } finally {
