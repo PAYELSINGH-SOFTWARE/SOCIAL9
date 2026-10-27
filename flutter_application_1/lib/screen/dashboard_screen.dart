@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -78,50 +79,114 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    key: scaffoldKey,
-    appBar: AppBar(
-      bottom: const PreferredSize(
-        preferredSize: Size.fromHeight(48),
-        child: BrandSwitcher(),
-      ),
-      title: Row(
-        children: [
-          Image.asset('assets/images/social9-web-mark.png', width: 34, height: 34),
-          const SizedBox(width: 9),
-          const Text('Social9', style: TextStyle(fontWeight: FontWeight.w800)),
-        ],
-      ),
-      actions: [
-        IconButton(
-          tooltip: 'Refresh',
-          onPressed: refresh,
-          icon: const Icon(Icons.refresh),
+  Widget build(BuildContext context) {
+    final dashboardTheme = Theme.of(context).copyWith(
+      cardTheme: const CardThemeData(
+        elevation: 6,
+        shadowColor: Color(0x33000000),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
         ),
-        IconButton(
-          tooltip: 'Profile',
-          onPressed: () => open(const ProfileScreen()),
-          icon: const Icon(Icons.account_circle_outlined),
+      ),
+    );
+
+    return Theme(
+      data: dashboardTheme,
+      child: Scaffold(
+        key: scaffoldKey,
+        appBar: AppBar(
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(48),
+            child: BrandSwitcher(),
+          ),
+          title: Row(
+            children: [
+              Image.asset(
+                'assets/images/social9-web-mark.png',
+                width: 34,
+                height: 34,
+              ),
+              const SizedBox(width: 9),
+              const Text(
+                'Social9',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Refresh',
+              onPressed: refresh,
+              icon: const Icon(Icons.refresh),
+            ),
+            IconButton(
+              tooltip: 'Profile',
+              onPressed: () => open(const ProfileScreen()),
+              icon: const Icon(Icons.account_circle_outlined),
+            ),
+          ],
         ),
-      ],
-    ),
-    drawer: _WorkspaceDrawer(onOpen: open, onLogout: logout),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: () => open(const CreatePostScreen()),
-      icon: const Icon(Icons.add),
-      label: const Text('Create post'),
-    ),
-    body: FutureBuilder<Map<String, dynamic>>(
-      future: summary,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) return _error(snapshot.error);
-        return _dashboard(snapshot.data!);
-      },
-    ),
-  );
+        drawer: _WorkspaceDrawer(onOpen: open, onLogout: logout),
+        bottomNavigationBar: NavigationBar(
+          height: 72,
+          elevation: 12,
+          shadowColor: const Color(0x33000000),
+          selectedIndex: 0,
+          onDestinationSelected: (index) {
+            switch (index) {
+              case 0:
+                // Home is already open.
+                break;
+              case 1:
+                open(const CreatePostScreen());
+                break;
+              case 2:
+                open(const CalendarScreen());
+                break;
+              case 3:
+                open(const ActionCenterScreen());
+                break;
+              case 4:
+                open(const ProfileScreen());
+                break;
+            }
+          },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.add_box_outlined),
+              label: 'Create Post',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.calendar_month_outlined),
+              label: 'Calendar',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bolt_outlined),
+              label: 'Action Center',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              label: 'Profile',
+            ),
+          ],
+        ),
+        body: FutureBuilder<Map<String, dynamic>>(
+          future: summary,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) return _error(snapshot.error);
+            return _dashboard(snapshot.data!);
+          },
+        ),
+      ),
+    );
+  }
 
   Widget _dashboard(Map<String, dynamic> data) {
     final overview = Map<String, dynamic>.from(data['overview'] as Map? ?? {});
@@ -130,6 +195,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     final upcoming = (data['upcoming_posts'] as List? ?? []).cast<Map>();
     final suggestions = (data['suggestions'] as List? ?? []).cast<Map>();
+
     return RefreshIndicator(
       onRefresh: () async => refresh(),
       child: ListView(
@@ -156,6 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     final width = constraints.maxWidth > 760
                         ? (constraints.maxWidth - 36) / 4
                         : (constraints.maxWidth - 12) / 2;
+
                     return Wrap(
                       spacing: 12,
                       runSpacing: 12,
@@ -202,6 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onOpen: () => open(const CalendarScreen()),
                     );
                     final quick = _QuickActions(onOpen: open);
+
                     return wide
                         ? Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,6 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       separatorBuilder: (_, _) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
                         final item = suggestions[index];
+
                         return SizedBox(
                           width: 280,
                           child: Card(
@@ -376,6 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 class _WorkspaceDrawer extends StatelessWidget {
   const _WorkspaceDrawer({required this.onOpen, required this.onLogout});
+
   final Future<void> Function(Widget) onOpen;
   final VoidCallback onLogout;
 
@@ -402,6 +472,7 @@ class _WorkspaceDrawer extends StatelessWidget {
       ),
       ('Profile', Icons.person_outline, const ProfileScreen()),
     ];
+
     return NavigationDrawer(
       children: [
         Padding(
@@ -458,11 +529,13 @@ class _MetricCard extends StatelessWidget {
     required this.icon,
     required this.color,
   });
+
   final double width;
   final String label;
   final Object value;
   final IconData icon;
   final Color color;
+
   @override
   Widget build(BuildContext context) => SizedBox(
     width: width,
@@ -492,9 +565,11 @@ class _FocusCard extends StatelessWidget {
     required this.overview,
     required this.onOpen,
   });
+
   final Map<String, dynamic> consistency;
   final Map<String, dynamic> overview;
   final VoidCallback onOpen;
+
   @override
   Widget build(BuildContext context) {
     final score =
@@ -503,6 +578,7 @@ class _FocusCard extends StatelessWidget {
                 ((overview['scheduled'] as num?) ?? 0) * 5)
             .round()
             .clamp(0, 100);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(22),
@@ -566,7 +642,9 @@ class _FocusCard extends StatelessWidget {
 
 class _QuickActions extends StatelessWidget {
   const _QuickActions({required this.onOpen});
+
   final Future<void> Function(Widget) onOpen;
+
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
@@ -592,6 +670,7 @@ class _QuickActions extends StatelessWidget {
       ),
     ),
   );
+
   Widget _action(String label, IconData icon, VoidCallback action) => ListTile(
     leading: Icon(icon),
     title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
