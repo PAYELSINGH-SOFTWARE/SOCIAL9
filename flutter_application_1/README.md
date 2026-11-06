@@ -1,6 +1,31 @@
-# Social9 mobile — shared website UI
+# Social9 mobile
 
-The shipping app loads **https://www.social9.io/login** in the device's system
+## Production native app
+
+The default entry point is the native Flutter app (`SOCIAL9_LEGACY_NATIVE=true`),
+connected to the production API at `https://social9-backend-ghqu.onrender.com`.
+Build it with `flutter build apk --release`. `SOCIAL9_API_URL` is available as a
+build-time override for deliberate staging builds. The current version/build
+in `pubspec.yaml` is `1.1.2+4`; increment the build for every distributed release.
+
+An app-wide update popup checks public `GET /app/version` on startup and resume.
+It compares the actual installed package version and build against Render's
+`LATEST_APP_VERSION`/`LATEST_APP_BUILD`. Updates can be deferred unless
+`FORCE_UPDATE=true` or the installed version/build is below
+`MIN_SUPPORTED_APP_VERSION`/`MIN_SUPPORTED_APP_BUILD`. Set `APP_UPDATE_URL` in
+Render to the actual HTTPS APK download or store page. Failed checks do not
+block normal startup. Deploy the backend endpoint before shipping this app.
+
+Release signing currently uses the existing development key. Configure your
+private release keystore before a store release; this change does not create a
+new app identity or signing key.
+
+## Optional shared website UI
+
+The website shell is available with
+`flutter run --dart-define=SOCIAL9_LEGACY_NATIVE=false`.
+
+The optional website shell loads **https://www.social9.io/login** in the device's system
 WebView. The website is the single UI implementation: the app uses the real
 responsive screens, not separate Flutter copies. Website updates become
 available after they are deployed and the page reloads.
@@ -129,9 +154,9 @@ chunk assembly. JavaScript tests cover export interception, OAuth session scope,
 native checkout callbacks and overlay/back behaviour. They are not substitutes
 for provider/device end-to-end acceptance.
 
-The previous Flutter implementation is preserved in `lib/legacy_app.dart` and
-`lib/screen/` for reference. Its regression tests still run; those tests do not
-prove functionality of the website shell. To inspect it deliberately:
+The production Flutter implementation is in `lib/legacy_app.dart` and
+`lib/screen/`. Its regression tests still run; those tests do not
+prove functionality of the optional website shell. To select it explicitly:
 
 ```powershell
 flutter run --dart-define=SOCIAL9_LEGACY_NATIVE=true

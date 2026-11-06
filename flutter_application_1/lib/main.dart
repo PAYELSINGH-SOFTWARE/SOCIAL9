@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app/website_screen.dart';
 import 'legacy_app.dart';
+import 'widgets/app_update_gate.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ class Social9App extends StatelessWidget {
     const purple = Color(0xFF7948EA);
 
     return MaterialApp(
+      navigatorKey: _websiteNavigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Social9',
       theme: ThemeData(
@@ -32,6 +34,10 @@ class Social9App extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const Social9WebsiteScreen(),
+      builder: (context, child) =>
+          AppUpdateGate(navigatorKey: _websiteNavigatorKey, child: child!),
     );
   }
 }
+
+final _websiteNavigatorKey = GlobalKey<NavigatorState>();

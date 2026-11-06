@@ -8,9 +8,9 @@ import 'screen/brand_service.dart';
 import 'core/api_client.dart';
 import 'screen/dashboard_screen.dart';
 import 'screen/login_screen.dart';
+import 'widgets/app_update_gate.dart';
 
-/// Previous Flutter screens are retained for migration/reference only. The
-/// shipping entry point uses the website so there is one UI implementation.
+/// Production native Flutter app, using the live Render API by default.
 class VCueSocial9App extends StatelessWidget {
   const VCueSocial9App({super.key});
 
@@ -59,7 +59,7 @@ class VCueSocial9App extends StatelessWidget {
             (_) => false,
           );
         };
-        return child!;
+        return AppUpdateGate(navigatorKey: _navigatorKey, child: child!);
       },
     );
   }
