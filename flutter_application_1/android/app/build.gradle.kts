@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,8 +7,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releasePropertiesFile = rootProject.file("key.properties")
+val releaseProperties = Properties().apply {
+    if (releasePropertiesFile.exists()) {
+        releasePropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 android {
-    namespace = "com.example.flutter_application_1"
+    namespace = "com.karan.social9"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,8 +25,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.flutter_application_1"
+        applicationId = "com.karan.social9"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = maxOf(flutter.minSdkVersion, 24)
@@ -26,12 +34,34 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = releaseProperties.getProperty("keyAlias")
+            keyPassword = releaseProperties.getProperty("keyPassword")
+            storeFile = releaseProperties.getProperty("storeFile")?.let { rootProject.file(it) }
+            storePassword = releaseProperties.getProperty("storePassword")
+        }
+    }
+
     buildTypes {
         release {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+}
+
+// Allow debug builds without a release key, but never silently debug-sign a
+// distributable release when the private local signing configuration is absent.
+tasks.matching { it.name == "validateSigningRelease" }.configureEach {
+    doFirst {
+        check(releasePropertiesFile.exists()) {
+            "Missing android/key.properties. Configure the private Social9 release keystore."
+        }
+        for (property in listOf("keyAlias", "keyPassword", "storeFile", "storePassword")) {
+            check(!releaseProperties.getProperty(property).isNullOrBlank()) {
+                "Missing release signing property: $property"
+            }
         }
     }
 }

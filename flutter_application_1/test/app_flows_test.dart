@@ -144,7 +144,7 @@ void main() {
       );
       expect(
         requests.map((r) => r.url.host),
-        everyElement('social9-backend-ghqu.onrender.com'),
+        everyElement('social9-backend-2tjj.onrender.com'),
       );
       expect(requests.map((r) => r.url.path), [
         '/social-accounts/instagram/connect',

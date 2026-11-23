@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="social9_icon_background">#FFFFFF</color>
+    <color name="social9_launch_background">#101218</color>
+    <!-- Android 7.1 round launchers still need an unversioned bitmap fallback. -->
+    <item type="mipmap" name="ic_launcher_round">@mipmap/ic_launcher</item>
+</resources>

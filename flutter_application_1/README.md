@@ -3,10 +3,10 @@
 ## Production native app
 
 The default entry point is the native Flutter app (`SOCIAL9_LEGACY_NATIVE=true`),
-connected to the production API at `https://social9-backend-ghqu.onrender.com`.
+connected to the production API at `https://social9-backend-2tjj.onrender.com`.
 Build it with `flutter build apk --release`. `SOCIAL9_API_URL` is available as a
 build-time override for deliberate staging builds. The current version/build
-in `pubspec.yaml` is `1.1.2+4`; increment the build for every distributed release.
+in `pubspec.yaml` is `1.1.3+5`; increment the build for every distributed release.
 
 An app-wide update popup checks public `GET /app/version` on startup and resume.
 It compares the actual installed package version and build against Render's
@@ -16,9 +16,18 @@ It compares the actual installed package version and build against Render's
 Render to the actual HTTPS APK download or store page. Failed checks do not
 block normal startup. Deploy the backend endpoint before shipping this app.
 
-Release signing currently uses the existing development key. Configure your
-private release keystore before a store release; this change does not create a
-new app identity or signing key.
+The Android application ID and namespace are `com.karan.social9`. This installs
+as a separate app from the previous `com.example.flutter_application_1` test APK.
+Release builds use a private release key configured by `android/key.properties`;
+missing signing configuration fails the release build instead of using a debug
+key. Both `android/social9-upload-keystore.jks` and `android/key.properties` are
+Git-ignored private files. Back up both securely and preserve them for all future
+releases. Debug builds continue to use Android's development key.
+
+```powershell
+flutter build apk --release --dart-define=SOCIAL9_LEGACY_NATIVE=true
+flutter build appbundle --release --dart-define=SOCIAL9_LEGACY_NATIVE=true
+```
 
 ## Optional shared website UI
 
@@ -31,7 +40,7 @@ responsive screens, not separate Flutter copies. Website updates become
 available after they are deployed and the page reloads.
 
 The website's same-origin `/service` proxy continues to use
-**https://social9-backend-ghqu.onrender.com**. No backend credentials, provider
+**https://social9-backend-2tjj.onrender.com**. No backend credentials, provider
 secrets, copied API implementation, or proxy CORS workaround are added to the
 app. The website remains responsible for authentication, brand scope, roles,
 plan entitlements, publishing and payment verification.
@@ -93,9 +102,8 @@ flutter run -d <android-device-id>
 flutter build apk --release
 ```
 
-The existing release signing configuration still uses the development key.
-This APK is suitable for installation/testing, **not a store-signed release**.
-Set up the final application ID and a private release keystore before distribution.
+Release builds use the same `com.karan.social9` package and private release
+signing configuration described above, including when building the website shell.
 
 Browser builds preserve path, query and hash fragments when redirecting directly
 to the website instead of framing it (the

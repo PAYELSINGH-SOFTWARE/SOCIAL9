@@ -88,7 +88,7 @@ void main() {
   setUp(() {
     PackageInfo.setMockInitialValues(
       appName: 'Social9',
-      packageName: 'com.example.flutter_application_1',
+      packageName: 'com.karan.social9',
       version: '1.1.1',
       buildNumber: '3',
       buildSignature: '',
@@ -103,7 +103,7 @@ void main() {
         () => MockClient((request) async {
           expect(
             request.url.toString(),
-            'https://social9-backend-ghqu.onrender.com/app/version',
+            'https://social9-backend-2tjj.onrender.com/app/version',
           );
           expect(request.headers.containsKey('Authorization'), isFalse);
           return http.Response(jsonEncode(policy()), 200);

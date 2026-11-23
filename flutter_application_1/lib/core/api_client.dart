@@ -20,7 +20,7 @@ class ApiClient {
 
   static const String baseUrl = String.fromEnvironment(
     'SOCIAL9_API_URL',
-    defaultValue: 'https://social9-backend-ghqu.onrender.com',
+    defaultValue: 'https://social9-backend-2tjj.onrender.com',
   );
 
   static Future<String?> token() async =>

@@ -14,7 +14,7 @@ class WebsitePolicy {
   }
 
   static const canonicalOrigin = 'https://www.social9.io';
-  static const backendOrigin = 'https://social9-backend-ghqu.onrender.com';
+  static const backendOrigin = 'https://social9-backend-2tjj.onrender.com';
   final Uri origin;
 
   Uri page(String path) {

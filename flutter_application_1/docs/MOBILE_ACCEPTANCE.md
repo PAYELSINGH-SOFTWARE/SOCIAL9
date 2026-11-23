@@ -105,10 +105,11 @@ codec support, payment, printing or social-consent completion on a device.
 
 ## Distribution and HTTPS link association
 
-The current package remains `com.example.flutter_application_1` to preserve
-compatibility with the earlier test APK. Release builds still use the existing
-development signing configuration. Choose a final application ID and private
-release key before store distribution; do not silently rotate a deployed key.
+The Android package is `com.karan.social9`. It installs separately from the
+earlier `com.example.flutter_application_1` test app. Release builds use the
+private keystore referenced by the Git-ignored `android/key.properties`; they
+never fall back to the development signing key. Preserve and back up both
+the keystore and its credentials for future updates.
 
 For the final package/certificate, publish this structure at the HTTPS hosts in
 the manifest, using the real release fingerprint (or Play App Signing fingerprint
@@ -120,7 +121,7 @@ when distributing through Play):
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "YOUR_FINAL_APPLICATION_ID",
+      "package_name": "com.karan.social9",
       "sha256_cert_fingerprints": ["YOUR_RELEASE_CERTIFICATE_SHA256"]
     }
   }

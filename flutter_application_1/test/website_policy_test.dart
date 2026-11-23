@@ -10,7 +10,7 @@ void main() {
       expect(policy.startPage.toString(), 'https://www.social9.io/login');
       expect(
         WebsitePolicy.backendOrigin,
-        'https://social9-backend-ghqu.onrender.com',
+        'https://social9-backend-2tjj.onrender.com',
       );
     });
     test('keeps every website route, including admin, inside the app', () {

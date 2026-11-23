@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item><shape><solid android:color="#101218" /></shape></item>
+    <item><shape><solid android:color="@color/social9_launch_background" /></shape></item>
+    <item android:width="80dp" android:height="80dp" android:gravity="center">
+        <shape android:shape="oval"><solid android:color="@color/social9_icon_background" /></shape>
+    </item>
     <item android:width="64dp" android:height="64dp" android:gravity="center">
-        <bitmap android:gravity="fill" android:src="@mipmap/ic_launcher" />
+        <bitmap android:gravity="fill" android:src="@drawable/social9_mark" />
     </item>
 </layer-list>
